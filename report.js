@@ -250,23 +250,19 @@
     window.print();
   });
 
-  /* ---------- 이메일 (§41) ---------- */
-  document.getElementById("mailBtn").addEventListener("click", function () {
-    var v = document.getElementById("email").value.trim();
-    var msg = document.getElementById("mailMsg");
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) {
-      msg.textContent = "메일 주소를 다시 확인해주세요.";
-      return;
-    }
-    S.save({ email: v });
-    T("email_report_click");
-    msg.textContent = "저장 중…";
-    App.Api.saveEmail(v).then(function (r) {
-      msg.textContent = r
-        ? "저장됐어요. 발송은 정식 오픈 시 제공됩니다."
-        : "이 기기에 저장했어요. (서버 미연결)";
+  /* ---------- 저장 ----------
+     예전에는 여기에 이메일 입력란이 있었다. 그런데 발송 기능이 없어서
+     주소만 받아두고 "발송은 정식 오픈 시 제공됩니다" 라고 답했다.
+     결제한 손님에게 "메일로 받아두세요" 라고 해놓고 안 보내는 건
+     하지 않은 약속이라 입력란 자체를 걷어냈다.
+     지금 실제로 되는 저장 수단은 인쇄·PDF 뿐이므로 그것만 안내한다. */
+  var saveBtn = document.getElementById("saveBtn");
+  if (saveBtn) {
+    saveBtn.addEventListener("click", function () {
+      T("save_print_click", { where: "mailbox" });
+      window.print();
     });
-  });
+  }
 
   /* ---------- 완독 추적 ---------- */
   var end = document.querySelector(".rfoot");

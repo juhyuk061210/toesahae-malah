@@ -28,6 +28,16 @@
   function eun(w) { return w + josa(w, "은", "는"); }
   function eul(w) { return w + josa(w, "을", "를"); }
 
+  /* 손님이 고르는 선택지는 "티 안 나는 일을 계속 처리했다" 처럼
+     이미 끝난 문장이다. 여기에 "이었습니다" 를 그냥 붙이면
+     "처리했다이었습니다" 가 된다. 실측으로 절반이 이 문장을 받았다.
+     인용부호로 감싸면 문장 안에 문장을 넣는 형태가 되어 자연스러워진다.
+     조사는 따옴표가 아니라 안쪽 글자의 받침으로 고른다. */
+  function q(w) { return "‘" + String(w) + "’"; }
+  function qEun(w) { return q(w) + josa(w, "은", "는"); }
+  function qEul(w) { return q(w) + josa(w, "을", "를"); }
+  function qWas(w) { return q(w) + josa(w, "이었습니다", "였습니다"); }
+
   /* ── 문장 고르기 ────────────────────────────────────
      같은 뜻을 여러 벌 써두고 사람마다 다른 것을 고른다.
      무작위로 하면 같은 사람이 새로고침할 때마다 글이 바뀌므로,
@@ -480,6 +490,9 @@
 
        배정 기준은 "먼저 오는 챕터가 가져간다"가 아니라
        판정 자신이 지정한 첫 챕터(= 가장 관련 깊은 곳)다. */
+    /* 이미 쓴 소제목 — 장끼리 겹치지 않게 한다 */
+    var usedLead = {};
+
     var homeOf = {};
     read.readings.forEach(function (r) {
       var home = (r.chapters && r.chapters[0]) || null;
@@ -503,10 +516,24 @@
     var EXTRA = {};
 
     /* 답변에서 찾은 긴장을 문단으로. 사주보다 이게 먼저다. */
-    function tensionParas(limit) {
+    /* opts.holdSuppress: 억제 문장("이건 말할 수 없습니다")을 뒤로 민다.
+
+       tension 은 억제 규칙을 가장 먼저 내보낸다. 정직해야 하는 자리라
+       그 자체는 맞지만, 그대로 두면 1장 첫 문단이 "말할 수 없습니다" 가 된다.
+       실측으로 전체 24.9%, 첫 직장 손님은 90.2%가 결제 직후 그 문장을 먼저 읽었다.
+       9,900원을 낸 사람이 처음 보는 두 줄이 "못 한다" 는 선언이면 안 된다.
+       문장을 지우는 게 아니라 순서만 바꾼다 — 말할 수 있는 것을 먼저 말하고,
+       못 하는 것은 그 뒤에 밝힌다. */
+    function tensionParas(limit, holdSuppress) {
       if (!tension) return [];
       var out = [];
-      (tension.picked || []).slice(0, limit || 2).forEach(function (x) {
+      var list = (tension.picked || []).slice();
+      if (holdSuppress && list.length > 1) {
+        var head = list.filter(function (x) { return x.grade !== "suppress"; });
+        var tail = list.filter(function (x) { return x.grade === "suppress"; });
+        if (head.length) list = head.concat(tail);
+      }
+      list.slice(0, limit || 2).forEach(function (x) {
         var s = x.body;
         if (x.cushion) s += " " + x.cushion;
         out.push(s);
@@ -525,32 +552,41 @@
 
     /* 1장 — 본인이 쓴 고민과 연결한다 */
     EXTRA.why = function () {
-      var out = tensionParas(2);
+      /* 결제 직후 처음 읽는 두 줄이다.
+         억제 문장("이건 지금 데이터로 말할 수 없습니다")이 여기 먼저 오면
+         9,900원을 낸 사람이 가장 먼저 보는 게 "못 한다" 는 선언이 된다.
+         실측으로 첫 직장 손님의 90%가 그랬다.
+
+         그래서 말할 수 있는 것부터 말한다. 본인이 쓴 고민, 그리고
+         생각과 행동의 간격 — 둘 다 손님이 직접 답한 것이라 확실한 이야기다.
+         못 하는 말은 그 뒤에 그대로 밝힌다. 지우지는 않는다. */
+      var out = [];
       if (A.freeText) {
         out.push("직접 적어주신 고민은 이랬습니다. “" + A.freeText + "” " +
                  "이 문장이 지금 상태를 가장 정확하게 요약합니다. 아래 구조가 그 배경입니다.");
       }
       if (A.quitFrequency && A.preparation) {
         out.push(pick([
-          "퇴사 생각은 " + A.quitFrequency + " 정도이고, 준비 상태는 " + A.preparation + "입니다. " +
+          "퇴사 생각은 " + A.quitFrequency + " 정도인데, 실제로 하신 건 " + qEul(A.preparation) + " 고르셨습니다. " +
           "이 두 가지의 간격이 지금 가장 크게 흔들리는 지점입니다. " +
           "마음은 이미 나가 있는데 몸은 아직 자리에 있는 상태가 오래 가면, " +
           "결정 자체보다 결정을 못 하는 상황이 더 지치게 만듭니다.",
 
-          "답을 보면 생각은 " + A.quitFrequency + ", 실제 준비는 " + A.preparation + "입니다. " +
+          "답을 보면 생각은 " + A.quitFrequency + ", 실제로 하신 건 " + q(A.preparation) + " 쪽입니다. " +
           "생각의 속도와 손의 속도가 다릅니다. 그 차이가 벌어져 있는 동안에는 " +
           "무엇을 해도 개운하지 않습니다.",
 
-          "머리로는 " + A.quitFrequency + " 퇴사를 떠올리시는데, 손은 " + A.preparation +
+          "머리로는 " + A.quitFrequency + " 퇴사를 떠올리시는데, 손은 " + q(A.preparation) +
           " 단계에 있습니다. 이 간격이 지금 피로의 큰 몫을 차지합니다. " +
           "떠나는 게 힘든 게 아니라, 떠나지도 남지도 않은 상태가 힘든 것입니다.",
 
-          "생각은 " + A.quitFrequency + " 나는데 준비는 " + A.preparation + "에 머물러 있습니다. " +
+          "생각은 " + A.quitFrequency + " 나는데 준비는 " + q(A.preparation) + " 에 머물러 있습니다. " +
           "이 어긋남 자체가 에너지를 씁니다. 결정을 내리는 것보다 " +
           "결정하지 않은 채로 버티는 쪽이 대개 더 비쌉니다."
         ]));
       }
-      return out;
+      /* 답변끼리 부딪혀 나온 것은 그다음에. 억제 문장도 여기서 그대로 나간다. */
+      return out.concat(tensionParas(2, true));
     };
 
     /* 4장 — 회사냐 직무냐. 점수로 가른다 */
@@ -608,11 +644,11 @@
           "이게 위 판정과 같은 쪽을 가리키면 원인이 분명한 것이고, " +
           "다르면 겉으로 보이는 이유 아래에 하나가 더 있다는 신호입니다.",
 
-          "직접 꼽으신 건 " + A.drainTop + "이었습니다. " +
+          "직접 꼽으신 건 " + qWas(A.drainTop) + " " +
           "명식이 가리키는 쪽과 겹치는지가 중요합니다. 겹치면 손댈 곳이 하나고, " +
           "어긋나면 지금 보이는 게 원인이 아닐 수 있습니다.",
 
-          "본인이 지목한 것은 " + A.drainTop + "입니다. " +
+          "본인이 지목한 것은 " + q(A.drainTop) + "입니다. " +
           "위에서 본 구조와 같은 방향인지 한 번 대보시면 됩니다. " +
           "어긋난다면 그 간격 자체가 단서입니다."
         ]));
@@ -730,11 +766,11 @@
          해석을 덧붙이지 않고 본인이 고른 것을 인용만 한다. */
       if (A.endured) {
         out.push(pick([
-          "지난 1년 스스로 잘 버텼다고 꼽으신 것은 " + A.endured + "이었습니다. " +
+          "지난 1년 스스로 잘 버텼다고 꼽으신 것은 " + qWas(A.endured) + " " +
           "이 답을 고르신 분께 필요한 건 더 버티는 법이 아니라, " +
           "그게 기록으로 남는 자리를 찾는 쪽에 가깝습니다.",
 
-          "마지막 문항에서 " + eul(A.endured) + " 고르셨습니다. " +
+          "마지막 문항에서 고르신 건 " + q(A.endured) + " 였습니다. " +
           "그건 아무도 안 세어준 항목입니다. 다음 자리를 고를 때 " +
           "그게 세어지는 곳인지를 기준 하나로 넣어두셔도 됩니다.",
 
@@ -749,8 +785,8 @@
       if (A.pastQuit && A.preparation &&
           /못 버텨서|버티다|소진/.test(A.pastQuit) &&
           /아무 준비도|생각만/.test(A.preparation)) {
-        out.push("이전 퇴사는 " + A.pastQuit + " 쪽이었다고 하셨습니다. " +
-                 "그리고 지금 준비 상태는 " + A.preparation + "입니다. " +
+        out.push("이전 퇴사는 " + q(A.pastQuit) + " 쪽이었다고 하셨습니다. " +
+                 "그리고 지금 하신 것은 " + q(A.preparation) + " 입니다. " +
                  "같은 조건이 다시 갖춰져 있는지, 그것만 확인하고 넘어가시면 됩니다.");
       }
       var STEP = {
@@ -1112,10 +1148,23 @@
 
       var rs = read.byChapter[c.id] || [];
       /* 한 줄 요약은 그 장의 첫 문단과 같은 것을 가리켜야 한다.
-         긴장 문장이 앞에 오는 장이면 그것이 그 장의 주제다. */
+         긴장 문장이 앞에 오는 장이면 그것이 그 장의 주제다.
+
+         여러 장이 같은 판정을 공유하기 때문에, 그냥 rs[0].claim 을 쓰면
+         2장과 9장이 글자까지 같은 소제목을 받는다. 실측 78~84%였다.
+         손님은 스크롤하다 "내가 잘못 봤나" 하고, 아니라는 걸 알면
+         "분량 채우려고 복붙했네" 로 읽는다.
+         그래서 이미 쓴 소제목은 건너뛰고 그 장의 다음 판정을 쓴다.
+         쓸 게 없으면 장 제목으로 돌아간다 — 겹치는 것보다는 낫다. */
       var lead = c.title;
-      if (leadOf[c.id]) lead = leadOf[c.id];
-      else if (rs.length) lead = rs[0].claim;
+      if (leadOf[c.id] && !usedLead[leadOf[c.id]]) {
+        lead = leadOf[c.id];
+      } else {
+        for (var li = 0; li < rs.length; li++) {
+          if (rs[li].claim && !usedLead[rs[li].claim]) { lead = rs[li].claim; break; }
+        }
+      }
+      usedLead[lead] = 1;
 
       /* 소제목과 본문 첫 문장이 글자까지 같은 경우가 80장 중 29장이었다.
          para() 가 claim 에 "입니다."를 붙여 문단을 여는데,

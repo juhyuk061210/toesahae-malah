@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>심층 리포트 | 퇴사해말아?</title>
+<meta name="theme-color" content="#F3EFE4" />
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
+<link rel="stylesheet" as="style" crossorigin
+  href="https://cdnjs.cloudflare.com/ajax/libs/pretendard/1.3.9/variable/pretendardvariable-dynamic-subset.min.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&display=swap" />
+<link rel="stylesheet" href="theme.css" />
+<link rel="stylesheet" href="flow.css" />
+<link rel="stylesheet" href="report.css" />
+</head>
+<body>
+<div class="shell">
+
+  <header class="top top--line">
+    <div class="top__in">
+      <a class="iconbtn" href="index.html" aria-label="홈">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      </a>
+      <span class="top__title">심층 리포트</span>
+      <button class="iconbtn" id="shareTop" type="button" aria-label="공유">
+        <svg viewBox="0 0 24 24">
+          <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+          <line x1="8.6" y1="10.5" x2="15.4" y2="6.5"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="rmain">
+
+    <!-- ==================== 표지 ==================== -->
+    <section class="cover">
+      <div class="rmast">
+        <span class="rmast__logo">퇴사해말아?</span>
+        <span class="rmast__tag">심층 리포트 · 10개 챕터</span>
+      </div>
+      <div class="rmast__rules"></div>
+
+      <p class="eyebrow eyebrow--ko cover__kick">전체 열람</p>
+      <h1 class="cover__title" id="cvTitle">－</h1>
+      <p class="cover__meta" id="cvMeta">－</p>
+
+      <div class="rmeta">
+        <span>본문 <b>10개 챕터</b></span>
+        <i class="rmeta__sep"></i>
+        <span><b>3부</b> 구성</span>
+        <i class="rmeta__sep"></i>
+        <span>읽는 데 <b>8분</b></span>
+      </div>
+    </section>
+
+    <!-- ==================== 퇴사 매트릭스 ==================== -->
+    <section class="rsec wrap rv">
+      <div class="rsec__head">
+        <p class="eyebrow eyebrow--ko">현재 위치</p>
+        <h2 class="rsec__t">나의 퇴사 매트릭스</h2>
+        <p class="rbody">
+          가로축은 <b>전환 준비도</b>, 세로축은 <b>사주상 변화 흐름</b>입니다.
+          두 축이 만나는 자리가 지금의 위치입니다.
+        </p>
+      </div>
+
+      <div class="mtx" id="mtx">
+        <span class="mtx__ax mtx__ax--y"><i>높음</i><b>변화<br />흐름</b><i>낮음</i></span>
+
+        <div class="mtx__grid">
+          <div class="mtx__cell" data-c="prep">
+            <span>준비 우선형</span>
+            <em>흐름은 열렸지만 준비가 덜 됐습니다</em>
+          </div>
+          <div class="mtx__cell" data-c="shift">
+            <span>전환 준비형</span>
+            <em>흐름과 준비가 같은 방향입니다</em>
+          </div>
+          <div class="mtx__cell" data-c="watch">
+            <span>관찰형</span>
+            <em>아직은 지켜볼 구간입니다</em>
+          </div>
+          <div class="mtx__cell" data-c="explore">
+            <span>탐색형</span>
+            <em>준비는 됐지만 흐름이 잠잠합니다</em>
+          </div>
+          <i class="mtx__dot" id="mtxDot"></i>
+        </div>
+
+        <span class="mtx__ax mtx__ax--x"><i>낮음</i><b>전환 준비도</b><i>높음</i></span>
+      </div>
+
+      <p class="mtx__now">현재 위치 — <b id="mtxName">－</b></p>
+      <p class="rbody mtx__line" id="mtxLine">－</p>
+    </section>
+
+    <!-- ==================== 3점수 요약 ==================== -->
+    <section class="rsec wrap rv">
+      <div class="rsec__head">
+        <p class="eyebrow eyebrow--ko">종합 점수</p>
+        <h2 class="rsec__t">세 가지 축의 현재 값</h2>
+      </div>
+      <div class="bars" id="sumBars"></div>
+      <p class="subs__foot">각 항목은 100점 기준입니다. 압박도가 높고 준비도가 낮을수록 결정을 서두르기 쉬운 상태입니다.</p>
+    </section>
+
+    <!-- ==================== 목차 ==================== -->
+    <section class="rsec wrap rv" id="tocSec">
+      <div class="rsec__head">
+        <p class="eyebrow eyebrow--ko">차례</p>
+        <h2 class="rsec__t">10개 챕터,<br />3부로 나눠 읽습니다</h2>
+      </div>
+
+      <ol class="toc" id="toc">
+        <li class="toc__part">1부 · 지금, 왜 흔들리는가</li>
+        <li><a class="toc__item" data-ch="1" href="#ch1"><span class="toc__n">01</span><span class="toc__t">나는 왜 지금 흔들리고 있을까?</span><i class="toc__ar">→</i></a></li>
+        <li><a class="toc__item" data-ch="2" href="#ch2"><span class="toc__n">02</span><span class="toc__t">나는 어떤 환경에서 오래 일하는 사람인가?</span><i class="toc__ar">→</i></a></li>
+        <li><a class="toc__item" data-ch="3" href="#ch3"><span class="toc__n">03</span><span class="toc__t">지금 회사에서 힘든 진짜 이유</span><i class="toc__ar">→</i></a></li>
+        <li><a class="toc__item" data-ch="4" href="#ch4"><span class="toc__n">04</span><span class="toc__t">회사가 안 맞는 걸까, 직무가 안 맞는 걸까?</span><i class="toc__ar">→</i></a></li>
+
+        <li class="toc__part">2부 · 반복될 것과 다가올 것</li>
+        <li><a class="toc__item" data-ch="5" href="#ch5"><span class="toc__n">05</span><span class="toc__t">퇴사해도 반복될 수 있는 내 패턴</span><i class="toc__ar">→</i></a></li>
+        <li><a class="toc__item" data-ch="6" href="#ch6"><span class="toc__n">06</span><span class="toc__t">앞으로 12개월 직장 흐름</span><i class="toc__ar">→</i></a></li>
+        <li><a class="toc__item" data-ch="7" href="#ch7"><span class="toc__n">07</span><span class="toc__t">변화가 강해지는 구간</span><i class="toc__ar">→</i></a></li>
+
+        <li class="toc__part">3부 · 그래서 무엇부터 할까</li>
+        <li><a class="toc__item" data-ch="8" href="#ch8"><span class="toc__n">08</span><span class="toc__t">다음 직장에서 찾아야 하는 환경</span><i class="toc__ar">→</i></a></li>
+        <li><a class="toc__item" data-ch="9" href="#ch9"><span class="toc__n">09</span><span class="toc__t">직장 · 프리랜서 · 사업 적합 성향</span><i class="toc__ar">→</i></a></li>
+        <li><a class="toc__item" data-ch="10" href="#ch10"><span class="toc__n">10</span><span class="toc__t">그래서 지금 무엇부터 정리해야 할까?</span><i class="toc__ar">→</i></a></li>
+      </ol>
+
+      <p class="toc__foot">한 번에 다 읽지 않으셔도 됩니다. 지금 가장 궁금한 챕터부터 눌러서 보세요.</p>
+    </section>
+
+    <!-- ==================== AI 서술 (서버 생성) ==================== -->
+    <section class="rsec rv" id="aiSec" hidden>
+      <div class="ai">
+        <p class="ai__lb" id="aiLabel">맞춤 해설</p>
+        <h2 class="ai__head" id="aiHead">－</h2>
+        <div class="ai__body" id="aiBody"></div>
+      </div>
+    </section>
+
+    <!-- ==================== 서술 생성 대기 ====================
+         AI 가 본문을 쓰는 동안 보여준다. 다 쓰면 사라진다.
+         진행률은 실제 완료가 아니라 경과 시간 기준이며 96%에서 멈춘다. -->
+    <section class="rsec wrap" id="narrWait" hidden>
+      <div class="narrwait">
+        <p class="narrwait__lb"><i class="dot-live"></i>맞춤 해설 작성 중</p>
+        <p class="narrwait__msg" id="narrMsg">명식을 다시 훑어보는 중이에요</p>
+        <div class="narrwait__track"><i id="narrBar"></i></div>
+        <p class="narrwait__note">
+          보통 1분 안에 끝납니다. 아래 도표와 수치는 이미 완성되어 있으니 먼저 보셔도 됩니다.
+          화면을 닫지 마세요.
+        </p>
+      </div>
+    </section>
+
+    <!-- ==================== 10개 챕터 ==================== -->
+    <div id="chapters"></div>
+
+    <!-- ==================== 이메일 저장 ==================== -->
+    <section class="rsec wrap rv">
+      <div class="mailbox">
+        <p class="eyebrow eyebrow--ko">보관</p>
+        <h3 class="mailbox__t">리포트를 메일로 받아두세요</h3>
+        <p class="rbody">나중에 다시 보고 싶을 때 링크로 열어볼 수 있어요.</p>
+        <div class="mailbox__row">
+          <input class="inp" type="email" id="email" placeholder="you@example.com" />
+          <button class="btn btn--dark" id="mailBtn" type="button">받기</button>
+        </div>
+        <p class="hint" id="mailMsg"></p>
+      </div>
+    </section>
+
+    <!-- ==================== 공유 카드 ==================== -->
+    <section class="rsec wrap rv">
+      <div class="sharecard" id="sharecard">
+        <span class="sharecard__orn" aria-hidden="true"></span>
+        <p class="sharecard__lb">나의 직장 변화 유형</p>
+        <h3 class="sharecard__t" id="shType">－</h3>
+        <p class="sharecard__d" id="shTag">－</p>
+        <span class="sharecard__brand">퇴사해말아?</span>
+      </div>
+      <button class="btn btn--ghost btn--full" id="shareBtn" type="button">유형 공유하기</button>
+    </section>
+
+    <!-- ==================== 판권 ==================== -->
+    <footer class="rfoot wrap">
+      <p class="rfoot__logo">퇴사해말아?</p>
+      <p class="disc">
+        본 서비스는 사주명리 기반의 자기이해 및 엔터테인먼트 콘텐츠입니다.
+        결과는 미래를 보장하거나 퇴사·이직과 같은 중요한 의사결정을 대신하지 않습니다.
+        실제 결정 시에는 현재 재정상황, 채용시장, 경력계획 등 객관적인 요소를 함께 고려해주세요.
+      </p>
+      <nav class="foot__nav">
+        <a href="terms.html">이용약관</a><span></span>
+        <a href="privacy.html">개인정보처리방침</a><span></span>
+        <a href="refund.html">환불정책</a>
+      </nav>
+      <p class="foot__biz"></p>
+      <p class="rfoot__cp">© 2026 퇴사해말아?</p>
+    </footer>
+
+    <div class="dock-space"></div>
+  </main>
+</div>
+
+<!-- ==================== 하단 도크 ==================== -->
+<div class="dock is-on" id="dock">
+  <div class="dock__in">
+    <button class="btn btn--ghost dock__ghost" id="printBtn" type="button">저장·인쇄</button>
+    <button class="btn btn--dark dock__btn" id="shareBtn2" type="button">친구에게 공유</button>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="site.js"></script>
+<script src="solar-terms.js"></script>
+<script src="lunar-table.js"></script>
+<script src="saju.js"></script>
+<script src="saju-deep.js"></script>
+<script src="saju-analyze.js"></script>
+<script src="saju-read.js"></script>
+<script src="diagnosis.js"></script>
+<script src="questions.js"></script>
+<script src="bridge.js"></script>
+<script src="tension.js"></script>
+<script src="app.js"></script>
+<script src="report.js"></script>
+<script>
+/* 목차 ↔ 챕터 연결.
+   report.js 가 #chapters 를 동기적으로 그린 뒤에 실행됩니다.
+   실패해도 목차는 '인쇄된 차례'로 그대로 남습니다. */
+(function () {
+  "use strict";
+  try {
+    var chs = document.querySelectorAll("#chapters .ch");
+    var items = document.querySelectorAll(".toc__item");
+    if (!chs.length) {
+      var sec = document.getElementById("tocSec");
+      if (sec) sec.hidden = true;
+      return;
+    }
+    Array.prototype.forEach.call(chs, function (el, i) {
+      el.id = "ch" + (i + 1);
+    });
+    Array.prototype.forEach.call(items, function (a) {
+      var target = document.getElementById("ch" + a.dataset.ch);
+      if (!target) { a.parentNode.hidden = true; return; }
+      var t = target.querySelector(".ch__t");
+      var lb = a.querySelector(".toc__t");
+      if (t && lb) lb.textContent = t.textContent;
+    });
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+# SQLite (실제 사용자 데이터 — 절대 커밋하지 마세요)
+data/
+*.db
+*.db-wal
+*.db-shm
+
+# 환경변수 (API 키)
+.env
+.env.*
+
+node_modules/
+.DS_Store
+
+# 옛 디자인 백업 (로컬 보관용)
+_backup_before_design1/

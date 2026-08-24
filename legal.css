@@ -1,0 +1,343 @@
+/* =========================================================
+   퇴사해말아? · 약관 / 정책 문서   (시안 1 "에디토리얼 매거진")
+   ---------------------------------------------------------
+   privacy.html · terms.html · refund.html 전용.
+   theme.css 의 토큰과 공통 컴포넌트(.shell .wrap .top .foot)를
+   그대로 계승하고, 여기에는 "읽는 지면"에 필요한 것만 둡니다.
+
+   원칙
+   1. 이 화면의 목적은 오직 가독성 — 긴 글을 끝까지 읽히게 한다.
+   2. 구획은 여백이 아니라 괘선(rule)이 만든다.
+   3. 명조는 말하는 것(제목), 산세리프는 안내하는 것(본문).
+   ========================================================= */
+
+.doc {
+  padding: var(--s5) var(--pad) var(--s8);
+  /* 본문 기준 크기 — 법령문은 --fs-sm(0.855) 보다 한 단계 크게 읽힌다 */
+  --doc-fs: 0.9rem;
+  --doc-lh: 1.92;
+}
+
+/* =========================================================
+   문서 탭 — 알약이 아니라 신문 색인
+   .doc__tab / .is-on 클래스명 유지
+   ========================================================= */
+.doc__tabs {
+  display: flex;
+  gap: 0;
+  margin: 0 calc(var(--pad) * -1) var(--s7);
+  padding-inline: var(--pad);
+  border-bottom: 1px solid var(--rule-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.doc__tabs::-webkit-scrollbar { display: none; }
+
+.doc__tab {
+  flex: 0 0 auto;
+  padding: 11px 13px 10px;
+  margin-bottom: -1px;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink-3);
+  white-space: nowrap;
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  transition: color 0.18s var(--ease), border-color 0.18s var(--ease);
+}
+.doc__tab:first-child { padding-left: 0; }
+.doc__tab:hover { color: var(--ink-0); }
+.doc__tab.is-on { color: var(--ink-0); border-bottom-color: var(--rd); }
+
+/* =========================================================
+   문서 머리 — 신문 이중 괘선으로 닫는다
+   ========================================================= */
+.doc__hd {
+  position: relative;
+  padding-bottom: 13px;
+  margin-bottom: calc(var(--s6) + 4px);
+  border-bottom: 2px solid var(--ink-0);
+}
+.doc__hd::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: -4px;
+  border-bottom: 1px solid var(--ink-0);
+}
+
+.doc__title {
+  font-family: var(--serif);
+  font-size: 1.62rem;
+  font-weight: 700;
+  line-height: 1.34;
+  letter-spacing: -0.042em;
+  color: var(--ink-0);
+  margin-top: 11px;
+}
+.doc__meta {
+  margin-top: 9px;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* =========================================================
+   편집자 주 — 사업자가 채워야 할 것을 먼저 알린다
+   ========================================================= */
+.doc__note {
+  background: var(--pp-0);
+  border: 1px solid var(--rule-2);
+  border-left: 3px solid var(--rd);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  padding: var(--s4) var(--s5) calc(var(--s4) + 2px);
+  margin-bottom: var(--s7);
+  font-size: var(--fs-xs);
+  line-height: 1.85;
+  color: var(--ink-2);
+}
+.doc__note b {
+  display: block;
+  margin-bottom: 5px;
+  font-family: var(--serif);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--ink-0);
+}
+
+/* =========================================================
+   본문
+   ========================================================= */
+.doc h2 {
+  position: relative;
+  font-family: var(--serif);
+  font-size: var(--fs-h2);
+  font-weight: 700;
+  line-height: 1.44;
+  letter-spacing: -0.034em;
+  color: var(--ink-0);
+  margin: var(--s8) 0 var(--s4);
+  padding-top: var(--s6);
+  border-top: 1px solid var(--rule-2);
+}
+/* 괘선 위에 얹힌 붉은 표식 — 머리표(.eyebrow) 모티프의 반복 */
+.doc h2::before {
+  content: "";
+  position: absolute;
+  left: 0; top: -1px;
+  width: 26px; height: 3px;
+  background: var(--rd);
+}
+.doc h2:first-of-type { margin-top: var(--s7); }
+
+.doc h3 {
+  font-family: var(--serif);
+  font-size: var(--fs-h3);
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: -0.03em;
+  color: var(--ink-1);
+  margin: var(--s6) 0 var(--s3);
+}
+
+.doc p {
+  font-size: var(--doc-fs);
+  line-height: var(--doc-lh);
+  letter-spacing: -0.014em;
+  color: var(--ink-2);
+  margin-bottom: var(--s4);
+}
+.doc p:last-child { margin-bottom: 0; }
+.doc strong { color: var(--ink-0); font-weight: 700; }
+
+/* 본문 안의 링크 */
+.doc p a, .doc li a {
+  color: var(--rd);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  text-decoration-color: rgba(176, 42, 30, 0.45);
+}
+.doc p a:hover, .doc li a:hover { text-decoration-color: var(--rd); }
+
+/* =========================================================
+   목록 — 점이 아니라 짧은 괘선 / 명조 숫자
+   ========================================================= */
+.doc ul, .doc ol {
+  list-style: none;
+  margin: 0 0 var(--s5);
+  padding: 0;
+}
+.doc li {
+  position: relative;
+  padding-left: 19px;
+  margin-bottom: 8px;
+  font-size: var(--doc-fs);
+  line-height: var(--doc-lh);
+  letter-spacing: -0.014em;
+  color: var(--ink-2);
+}
+.doc li:last-child { margin-bottom: 0; }
+
+.doc ul > li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.82em;
+  width: 8px; height: 2px;
+  background: var(--rd);
+}
+
+.doc ol { counter-reset: docnum; }
+.doc ol > li { padding-left: 27px; }
+.doc ol > li::before {
+  counter-increment: docnum;
+  content: counter(docnum);
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-family: var(--serif);
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: var(--doc-lh);
+  letter-spacing: -0.02em;
+  color: var(--rd);
+  font-variant-numeric: tabular-nums;
+}
+
+/* =========================================================
+   표 — 세로 괘선을 지우고 가로 괘선만 남긴다
+   좁은 화면에서는 .doc__scroll 안에서 가로로 밀린다
+   ========================================================= */
+.doc__scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0 0 var(--s5);
+  scrollbar-width: thin;
+  /* 좌우로 더 있음을 알리는 그림자 — 스크롤하면 사라진다 */
+  background:
+    linear-gradient(to right,  var(--pp-1) 40%, rgba(243, 239, 228, 0)) left center,
+    linear-gradient(to left,   var(--pp-1) 40%, rgba(243, 239, 228, 0)) right center,
+    radial-gradient(farthest-side at 0 50%,   rgba(22, 20, 15, 0.24), rgba(22, 20, 15, 0)) left center,
+    radial-gradient(farthest-side at 100% 50%, rgba(22, 20, 15, 0.24), rgba(22, 20, 15, 0)) right center;
+  background-repeat: no-repeat;
+  background-size: 30px 100%, 30px 100%, 14px 100%, 14px 100%;
+  background-attachment: local, local, scroll, scroll;
+}
+.doc__scroll::-webkit-scrollbar { height: 6px; }
+.doc__scroll::-webkit-scrollbar-thumb { background: var(--rule-2); border-radius: var(--r-full); }
+
+.doc table {
+  width: 100%;
+  /* 지면 폭(440 - 좌우 여백)에 딱 맞춘다.
+     이보다 좁은 기기에서는 글자가 세로로 무너지는 대신 가로로 밀린다. */
+  min-width: calc(var(--col) - var(--pad) * 2);
+  border-collapse: collapse;
+  font-size: var(--fs-xs);
+}
+.doc th, .doc td {
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+  line-height: 1.66;
+  letter-spacing: -0.014em;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+}
+.doc th {
+  padding-bottom: 8px;
+  background: none;
+  border-bottom: 1px solid var(--ink-0);
+  font-size: 0.665rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.doc td { color: var(--ink-2); }
+.doc td:first-child { color: var(--ink-1); font-weight: 700; }
+.doc th:first-child, .doc td:first-child { padding-left: 0; }
+.doc th:last-child,  .doc td:last-child  { padding-right: 0; }
+.doc tr:last-child td { border-bottom: 1px solid var(--rule-2); }
+
+/* =========================================================
+   [대괄호] 자리표시자 — 사업자가 채워야 할 곳
+   ========================================================= */
+.doc__fill {
+  color: var(--rd);
+  font-weight: 700;
+  background: var(--rd-tn);
+  box-shadow: inset 0 -1px 0 var(--rd);
+  border-radius: var(--r-sm);
+  padding: 1px 5px 2px;
+  /* 줄바꿈으로 쪼개져도 양쪽 조각 모두에 여백·밑줄이 남게 */
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* =========================================================
+   기사 끝 표식 + 다른 문서로
+   ========================================================= */
+.doc__end {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-top: var(--s8);
+}
+.doc__end::before, .doc__end::after {
+  content: "";
+  flex: 1 1 auto;
+  border-top: 1px solid var(--rule);
+}
+.doc__end i {
+  flex: 0 0 6px;
+  width: 6px; height: 6px;
+  background: var(--rd);
+  transform: rotate(45deg);
+}
+
+.doc__more { margin-top: var(--s7); border-top: 1px solid var(--ink-0); }
+.doc__more-lb {
+  margin: 12px 0 2px;
+  font-size: 0.665rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--ink-4);
+  text-transform: uppercase;
+}
+.doc__more a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--serif);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.032em;
+  color: var(--ink-0);
+  text-decoration: none;
+  transition: color 0.18s var(--ease);
+}
+.doc__more a:hover { color: var(--rd); }
+.doc__more a i {
+  flex: 0 0 auto;
+  font-family: var(--sans);
+  font-style: normal;
+  font-size: 0.95rem;
+  line-height: 1;
+  color: var(--rd);
+}
+
+/* =========================================================
+   아주 좁은 화면
+   ========================================================= */
+@media (max-width: 359px) {
+  .doc { --doc-fs: 0.875rem; }
+  .doc__title { font-size: 1.44rem; }
+}

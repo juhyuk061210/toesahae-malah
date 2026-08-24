@@ -1,0 +1,418 @@
+/* =========================================================
+   랜딩 전용 스타일 (index.html)
+   공통 토큰·컴포넌트는 theme.css 에 있습니다.
+   여기에는 랜딩에서만 쓰는 지면 요소만 둡니다.
+   ========================================================= */
+
+/* =========================================================
+   제자리 (masthead)
+   theme 의 .top / .top__in 위에 신문 이중 괘선을 얹는다.
+   ========================================================= */
+#top { background: rgba(243, 239, 228, 0.94); }
+.mast__row {
+  align-items: baseline;
+  min-height: 0;
+  padding-top: 16px;
+  padding-bottom: 9px;
+}
+.mast__tag {
+  font-family: var(--serif);
+  font-size: 0.72rem;
+  font-style: italic;
+  color: var(--ink-3);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+.mast__rules {
+  margin-inline: var(--pad);
+  border-top: 2px solid var(--ink-0);
+  padding-top: 2px;
+}
+.mast__rules::after { content: ""; display: block; border-top: 1px solid var(--ink-0); }
+/* 스크롤 시 theme 의 .top--line 이 붙는다 — 괘선이 셋이 되지 않게 그림자로 바꾼다 */
+#top.top--line { border-bottom: 0; box-shadow: 0 10px 16px -14px rgba(22, 20, 15, 0.55); }
+
+/* =========================================================
+   히어로
+   ========================================================= */
+.hero { padding-block: 18px 32px; }
+.hero__hd { margin-top: 10px; }
+.hero__deck { margin-top: 13px; }
+
+/* 기사 메타 — 얇은 구분자로 나눠 회색 덩어리를 막는다 */
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 10px;
+  margin-top: 15px;
+  padding: 8px 0;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.705rem;
+  line-height: 1.7;
+  letter-spacing: 0.02em;
+  color: var(--ink-3);
+}
+.meta b { color: var(--ink-1); font-weight: 700; }
+.meta__sep { width: 1px; height: 10px; background: var(--rule-2); }
+
+/* ---- 도판(plate) ---- */
+.plate { margin-top: 18px; }
+.plate__frame {
+  border: 1px solid var(--ink-0);
+  background: var(--ink-0);
+  line-height: 0;
+}
+.plate__cap {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 7px;
+  border-top: 1px solid var(--rule);
+  font-size: 0.735rem;
+  line-height: 1.62;
+  color: var(--ink-3);
+}
+.plate__cap b {
+  flex: 0 0 auto;
+  font-family: var(--serif);
+  font-weight: 700;
+  color: var(--rd);
+}
+.plate__cap span { font-family: var(--serif); font-style: italic; }
+
+.plate__steam path { animation: steam 3.6s ease-in-out infinite; }
+.plate__steam path:nth-child(2) { animation-delay: 1.2s; }
+@keyframes steam {
+  0%   { opacity: 0; transform: translateY(3px); }
+  40%  { opacity: 0.55; }
+  100% { opacity: 0; transform: translateY(-7px); }
+}
+.plate__win rect { animation: flick 6s steps(1, end) infinite; }
+.plate__win rect:nth-child(4n) { animation-delay: 2.4s; }
+.plate__win rect:nth-child(3n) { animation-delay: 4.1s; }
+@keyframes flick { 0%, 92%, 100% { opacity: inherit; } 94% { opacity: 0.1; } }
+
+/* ---- 히어로 CTA ---- */
+.cta { margin-top: 18px; }
+.cta__note {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 0.735rem;
+  line-height: 1.6;
+  color: var(--ink-3);
+}
+.cta__note b { color: var(--ink-1); font-weight: 700; }
+
+/* 본문 중간 CTA */
+.midcta { margin-top: 26px; padding-top: 22px; border-top: 1px solid var(--rule); }
+
+/* =========================================================
+   고민 인용
+   ========================================================= */
+.voices { list-style: none; border-top: 1px solid var(--rule); }
+.voice {
+  display: flex;
+  gap: 14px;
+  padding: 15px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.voice__n {
+  flex: 0 0 22px;
+  padding-top: 4px;
+  font-family: var(--serif);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--rd);
+  font-variant-numeric: tabular-nums;
+}
+.voice__t {
+  font-family: var(--serif);
+  font-size: 1.02rem;
+  line-height: 1.62;
+  letter-spacing: -0.03em;
+  color: var(--ink-1);
+}
+
+/* 드롭캡 브리지 문단 */
+.bridge {
+  margin-top: 24px;
+  font-family: var(--serif);
+  font-size: 0.985rem;
+  line-height: 1.82;
+  letter-spacing: -0.028em;
+  color: var(--ink-1);
+}
+.bridge::first-letter {
+  float: left;
+  font-size: 3.05rem;
+  line-height: 0.86;
+  font-weight: 700;
+  color: var(--rd);
+  padding: 6px 9px 0 0;
+}
+.bridge b {
+  font-weight: 700;
+  color: var(--ink-0);
+  box-shadow: inset 0 -0.42em 0 var(--rd-tn);
+}
+
+/* =========================================================
+   목차형 — 세 가지 질문
+   ========================================================= */
+.toc { list-style: none; border-top: 1px solid var(--ink-0); }
+.toc__item {
+  display: flex;
+  gap: 16px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.toc__n {
+  flex: 0 0 34px;
+  padding-top: 2px;
+  font-family: var(--serif);
+  font-size: 1.5rem;
+  font-weight: 400;
+  line-height: 1;
+  color: var(--rd);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.toc__t {
+  font-family: var(--serif);
+  font-size: 1.09rem;
+  font-weight: 700;
+  line-height: 1.45;
+  letter-spacing: -0.032em;
+  color: var(--ink-0);
+}
+.toc__d { margin-top: 6px; font-size: 0.815rem; line-height: 1.68; color: var(--ink-2); }
+
+/* =========================================================
+   결과 미리보기 지면
+   ========================================================= */
+.sheet {
+  background: var(--pp-0);
+  border: 1px solid var(--rule-2);
+  padding: 18px var(--pad) 20px;
+}
+.sheet__hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 11px;
+  border-bottom: 1px solid var(--ink-0);
+}
+.sheet__ttl {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--ink-2);
+}
+/* '예시' 도장 — 흐름 안에 놓아 숫자와 겹치지 않게 */
+.stamp {
+  flex: 0 0 auto;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--rd);
+  border: 1.5px solid var(--rd);
+  border-radius: 2px;
+  padding: 2px 8px 3px;
+  transform: rotate(-4deg);
+  line-height: 1.3;
+}
+
+.metric { padding-top: 15px; }
+.metric__row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+.metric__lb {
+  font-size: 0.845rem;
+  font-weight: 700;
+  color: var(--ink-1);
+  letter-spacing: -0.02em;
+}
+.metric__val {
+  font-family: var(--serif);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--rd);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+}
+.metric__val--big { font-size: 2.45rem; }
+.metric__val--mid { font-size: 1.5rem; color: var(--ink-0); }
+.metric__val small {
+  font-family: var(--sans);
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--ink-3);
+  letter-spacing: 0;
+  margin-left: 2px;
+}
+
+/* 구성 요소 그룹 — 들여쓰기 + 세로 괘선으로 소속을 보인다 */
+.subs {
+  margin: 13px 0 0 3px;
+  padding: 2px 0 2px 13px;
+  border-left: 1px solid var(--rule-2);
+}
+.subs__cap {
+  margin-bottom: 8px;
+  font-size: 0.665rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--ink-4);
+}
+
+.sheet__split { margin: 17px 0 15px; }
+
+.mini { margin-top: 8px; }
+.mini + .mini { margin-top: 14px; }
+.mini__bar { margin-top: 7px; }
+.mini__bar .bar__tr { height: 7px; }
+
+/* 카드 끝 인용 — 각주가 아니라 결론이 되도록 */
+.pull {
+  margin-top: 20px;
+  padding: 2px 0 2px 14px;
+  border-left: 2px solid var(--rd);
+  font-family: var(--serif);
+  font-size: 0.92rem;
+  line-height: 1.72;
+  letter-spacing: -0.03em;
+  color: var(--ink-0);
+}
+
+.sheet__foot {
+  margin-top: 16px;
+  padding-top: 11px;
+  border-top: 1px solid var(--rule);
+  font-size: 0.7rem;
+  line-height: 1.6;
+  color: var(--ink-3);
+}
+
+/* =========================================================
+   무료 / 유료 대비표
+   ========================================================= */
+.spec { width: 100%; border-collapse: collapse; font-size: 0.775rem; }
+.spec th, .spec td {
+  padding: 9px 6px;
+  border-bottom: 1px solid var(--rule);
+  text-align: center;
+  vertical-align: middle;
+  letter-spacing: -0.02em;
+}
+.spec thead th { border-bottom: 1px solid var(--ink-0); padding-bottom: 8px; }
+.spec th:first-child, .spec td:first-child {
+  width: 47%;
+  padding-left: 0;
+  text-align: left;
+  color: var(--ink-1);
+  font-weight: 500;
+  line-height: 1.45;
+}
+.spec col.c-free { width: 25%; }
+.spec col.c-paid { width: 28%; }
+.spec__h {
+  font-family: var(--serif);
+  font-size: 0.83rem;
+  font-weight: 700;
+  color: var(--ink-0);
+  letter-spacing: -0.03em;
+  line-height: 1.3;
+}
+.spec__h em {
+  display: block;
+  margin-top: 3px;
+  font-family: var(--sans);
+  font-style: normal;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--ink-3);
+  letter-spacing: 0;
+}
+.spec__h em.is-rd { color: var(--rd); }
+.spec .is-paid { background: var(--rd-tn); }
+.spec td { color: var(--ink-2); font-weight: 600; }
+.spec .dot { color: var(--ink-0); font-size: 0.62rem; }
+.spec .dot--rd { color: var(--rd); }
+.spec .none { color: var(--ink-4); font-weight: 400; }
+.spec tfoot td { padding-top: 11px; border-bottom: 0; font-weight: 700; color: var(--ink-0); }
+.spec tfoot td.is-paid { font-family: var(--serif); font-size: 0.95rem; color: var(--rd); }
+
+.spec__note { margin-top: 12px; }
+
+/* =========================================================
+   진행 방식
+   ========================================================= */
+.steps { list-style: none; border-top: 1px solid var(--ink-0); }
+.step {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.step__n {
+  flex: 0 0 22px;
+  font-family: var(--serif);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--rd);
+  font-variant-numeric: tabular-nums;
+}
+.step__t { font-size: 0.9rem; font-weight: 500; color: var(--ink-1); letter-spacing: -0.02em; }
+.step__x { margin-left: auto; flex: 0 0 auto; font-size: 0.7rem; color: var(--ink-4); }
+
+/* =========================================================
+   마무리
+   ========================================================= */
+.end {
+  padding-block: 44px 46px;
+  background: var(--ink-0);
+  color: var(--pp-1);
+}
+.end__orn { width: 30px; height: 2px; background: var(--rd); margin: 0 auto 20px; }
+.end__hd {
+  font-family: var(--serif);
+  font-size: 1.72rem;
+  font-weight: 700;
+  line-height: 1.42;
+  letter-spacing: -0.045em;
+  color: #fff;
+  text-align: center;
+}
+.end__deck {
+  max-width: 21em;
+  margin: 14px auto 0;
+  text-align: center;
+  font-size: 0.83rem;
+  line-height: 1.72;
+  color: #A9A296;
+}
+.end .btn { margin-top: 24px; border-color: var(--rd); }
+.end .btn:hover { background: var(--rd-lt); border-color: var(--rd-lt); }
+.end__note { margin-top: 12px; text-align: center; font-size: 0.735rem; color: #8B8478; }
+.end__note b { color: #E6E0D2; font-weight: 700; }
+
+/* 판권은 도크 뒤까지 같은 지면색으로 이어진다 */
+.foot { border-top: 0; }
+.foot + .dock-space { background: var(--pp-2); }
+
+/* =========================================================
+   아주 좁은 화면 보정
+   ========================================================= */
+@media (max-width: 359px) {
+  .mast__tag { display: none; }
+  .metric__val--big { font-size: 2.1rem; }
+  .spec { font-size: 0.735rem; }
+}

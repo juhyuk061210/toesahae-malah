@@ -1,0 +1,513 @@
+@import url("https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&display=swap");
+
+/* =========================================================
+   퇴사해말아? · 디자인 시스템  (시안 1 "에디토리얼 매거진")
+   ---------------------------------------------------------
+   원칙
+   1. 색은 셋뿐 — 종이(아이보리) · 잉크 · 포인트 레드 하나.
+   2. 구획은 여백이 아니라 괘선(rule)이 만든다.
+   3. 세리프(명조)는 말하는 것, 산세리프는 안내하는 것.
+
+   이 파일은 전 화면 공통입니다. 화면 전용 스타일은
+   landing.css / flow.css / report.css / legal.css 에 두세요.
+   ========================================================= */
+
+:root {
+  /* =======================================================
+     종이 — 지면 계열
+     ======================================================= */
+  --pp-0: #FCFAF4;   /* 카드(백지) */
+  --pp-1: #F3EFE4;   /* 지면 기본 */
+  --pp-2: #EBE5D6;   /* 톤 깔린 단 */
+  --pp-3: #E1DAC7;   /* 트랙 */
+  --edge: #0E0D0A;   /* 지면 바깥(브라우저 여백) */
+
+  /* =======================================================
+     잉크
+     ======================================================= */
+  --ink-0: #16140F;  /* 제목 · 최대 대비 */
+  --ink-1: #2A2724;  /* 본문 강조 */
+  --ink-2: #4E4941;  /* 본문 */
+  --ink-3: #6B655C;  /* 보조 — 지면 대비 5.1:1, AA 통과 */
+  --ink-4: #8F887C;  /* 흐림 (본문 금지, 캡션/구분자만) */
+
+  /* =======================================================
+     괘선
+     ======================================================= */
+  --rule:   #D9D2BF;   /* 기본 구분선 */
+  --rule-2: #C3BAA3;   /* 한 단계 진한 구분선 */
+
+  /* =======================================================
+     포인트 — 단 하나
+     ======================================================= */
+  --rd:    #B02A1E;   /* 지면 대비 5.8:1, 흰 글씨 대비 5.8:1 — AA */
+  --rd-dk: #8C1F15;   /* 눌림 · 테두리 */
+  --rd-lt: #C43426;   /* 어두운 면 위 hover */
+  --rd-tn: rgba(176, 42, 30, 0.08);  /* 음영 강조 */
+
+  /* =======================================================
+     잉크 보조 — 두 번째 색이 아니라 잉크의 농담
+     ======================================================= */
+  --tl:    #4E4941;
+  --tl-gl: rgba(78, 73, 65, 0.08);
+
+  /* ---- 상태 ---- */
+  --ok: #3E7A55;
+  --wn: #A8761F;
+
+  /* =======================================================
+     타이포
+     ======================================================= */
+  --serif: "Noto Serif KR", "Nanum Myeongjo", AppleMyungjo,
+           "Source Han Serif K", Batang, Georgia, "Times New Roman", serif;
+  --sans:  "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
+           system-ui, "Segoe UI", "Apple SD Gothic Neo", sans-serif;
+  --font:  var(--sans);          /* 구버전 별칭 */
+
+  --fs-hero: 2.32rem;
+  --fs-h1:   1.6rem;
+  --fs-h2:   1.22rem;
+  --fs-h3:   1.05rem;
+  --fs-bd:   0.95rem;
+  --fs-sm:   0.855rem;
+  --fs-xs:   0.775rem;
+  --fs-2xs:  0.7rem;
+
+  /* =======================================================
+     간격 · 형태
+     ======================================================= */
+  --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px;
+  --s5: 20px; --s6: 24px; --s7: 32px; --s8: 40px;
+  --s9: 56px; --s10: 72px;
+
+  /* 에디토리얼 = 각진 활자 블록. 둥근 모서리는 쓰지 않습니다. */
+  --r-sm: 2px; --r: 2px; --r-lg: 3px; --r-xl: 3px;
+  --r-full: 999px;
+
+  --sh-1: 0 1px 2px rgba(22, 20, 15, 0.06);
+  --sh-2: 0 4px 16px rgba(22, 20, 15, 0.08);
+  --sh-3: 0 14px 36px rgba(22, 20, 15, 0.14);
+
+  --col: 440px;
+  --pad: 22px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* ---- 구버전 토큰 별칭 (기존 화면이 깨지지 않도록 유지) ---- */
+  --iv-0: var(--pp-0);
+  --iv-1: var(--pp-1);
+  --iv-2: var(--pp-2);
+  --iv-3: var(--rule);
+  --rd-1: var(--rd-lt);
+  --rd-2: var(--rd-dk);
+  --rd-gl: var(--rd-tn);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+[hidden] { display: none !important; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  background: var(--edge);
+}
+
+body {
+  font-family: var(--sans);
+  background: var(--edge);
+  color: var(--ink-1);
+  font-size: var(--fs-bd);
+  line-height: 1.72;
+  letter-spacing: -0.012em;
+  -webkit-font-smoothing: antialiased;
+  word-break: keep-all;
+  overflow-x: hidden;
+}
+
+img, svg { display: block; max-width: 100%; }
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: inherit; text-decoration: none; }
+b, strong { font-weight: 700; }
+
+/* =========================================================
+   셸 — 한 장의 지면
+   ========================================================= */
+.shell {
+  width: 100%;
+  max-width: var(--col);
+  margin-inline: auto;
+  min-height: 100vh;
+  background: var(--pp-1);
+  position: relative;
+}
+@media (min-width: 480px) {
+  .shell { box-shadow: 0 0 80px rgba(0, 0, 0, 0.6); }
+}
+.wrap { padding-inline: var(--pad); }
+
+/* =========================================================
+   타이포
+   디스플레이(t-hero ~ t-h3)는 명조, 본문(t-bd 이하)은 산세리프.
+   ========================================================= */
+.t-hero, .t-h1, .t-h2, .t-h3 {
+  font-family: var(--serif);
+  color: var(--ink-0);
+  font-weight: 700;
+}
+.t-hero { font-size: var(--fs-hero); line-height: 1.3;  letter-spacing: -0.045em; }
+.t-h1   { font-size: var(--fs-h1);   line-height: 1.36; letter-spacing: -0.035em; }
+.t-h2   { font-size: var(--fs-h2);   line-height: 1.42; letter-spacing: -0.032em; }
+.t-h3   { font-size: var(--fs-h3);   line-height: 1.48; letter-spacing: -0.03em;  }
+
+.t-bd { font-size: var(--fs-bd); line-height: 1.8;  color: var(--ink-2); letter-spacing: -0.014em; }
+.t-sm { font-size: var(--fs-sm); line-height: 1.7;  color: var(--ink-2); letter-spacing: -0.012em; }
+.t-xs { font-size: var(--fs-xs); line-height: 1.62; color: var(--ink-3); letter-spacing: -0.005em; }
+
+/* 기사 머리표 — 앞에 붙는 짧은 붉은 괘선이 모티프 */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--sans);
+  font-size: 0.685rem;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 0.2em;
+  color: var(--rd);
+  text-transform: uppercase;
+}
+.eyebrow::before {
+  content: "";
+  flex: 0 0 22px;
+  width: 22px;
+  height: 2px;
+  background: var(--rd);
+}
+/* 한글 머리표 — 자간을 줄이고 대문자 변환을 끈다 */
+.eyebrow--ko { letter-spacing: 0.08em; text-transform: none; }
+
+.em-rd { color: var(--rd); }
+
+/* 강조 — 형광펜이 아니라 괘선 */
+.mark { border-bottom: 3px solid var(--rd); padding-bottom: 1px; }
+/* 본문 흐름을 끊지 않는 옅은 음영 강조 */
+.mark--tn { border-bottom: 0; box-shadow: inset 0 -0.42em 0 var(--rd-tn); }
+
+/* =========================================================
+   버튼 — 각진 활자 블록. 그라데이션 · 둥근 모서리 없음.
+   ========================================================= */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s2);
+  min-height: 56px;
+  padding: 0 20px;
+  font-family: var(--sans);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: #fff;
+  background: var(--rd);
+  border: 1px solid var(--rd-dk);
+  border-radius: var(--r);
+  text-align: center;
+  text-decoration: none;        /* .btn 은 a 태그로도 쓰인다 — 밑줄 금지 */
+  cursor: pointer;
+  transition: background 0.18s var(--ease), transform 0.12s var(--ease), color 0.18s;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:hover { background: var(--rd-dk); }
+.btn:active { transform: translateY(1px); }
+.btn__ar { font-size: 1.05rem; line-height: 1; transform: translateY(-1px); }
+
+.btn--pri {
+  color: #fff;
+  background: var(--rd);
+  border-color: var(--rd-dk);
+}
+.btn--pri:hover { background: var(--rd-dk); }
+
+.btn--dark {
+  color: var(--pp-0);
+  background: var(--ink-0);
+  border-color: var(--ink-0);
+}
+.btn--dark:hover { background: var(--ink-1); }
+
+.btn--ghost {
+  color: var(--ink-0);
+  background: transparent;
+  border: 1px solid var(--ink-0);
+}
+.btn--ghost:hover { background: var(--ink-0); color: var(--pp-0); }
+
+.btn--full { width: 100%; }
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* =========================================================
+   칩 — 활자 라벨
+   ========================================================= */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-2xs);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+  border-radius: var(--r);
+  padding: 4px 10px 5px;
+  background: var(--pp-0);
+  border: 1px solid var(--rule-2);
+  color: var(--ink-2);
+}
+.chip--rd   { background: var(--rd-tn); border-color: var(--rd); color: var(--rd); }
+.chip--dark { background: var(--ink-0); border-color: var(--ink-0); color: var(--pp-0); }
+
+.dot-live {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--rd); flex-shrink: 0;
+  animation: blip 1.9s ease-in-out infinite;
+}
+@keyframes blip {
+  0%   { box-shadow: 0 0 0 0 rgba(176, 42, 30, 0.45); }
+  70%  { box-shadow: 0 0 0 7px rgba(176, 42, 30, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(176, 42, 30, 0); }
+}
+
+/* =========================================================
+   카드 — 지면 위에 얹은 한 장
+   ========================================================= */
+.card {
+  background: var(--pp-0);
+  border: 1px solid var(--rule-2);
+  border-radius: var(--r);
+  padding: var(--s5) var(--s5) var(--s6);
+}
+.card--flat { background: var(--pp-2); border-color: var(--rule); }
+.card--dark { background: var(--ink-0); border-color: var(--ink-0); color: var(--pp-1); }
+.card--dark .t-bd, .card--dark .t-sm { color: #A9A296; }
+.card--dark .t-h1, .card--dark .t-h2, .card--dark .t-h3 { color: #fff; }
+
+/* =========================================================
+   섹션 — 여백이 아니라 괘선이 나눈다
+   ========================================================= */
+.sec { padding-block: 38px 42px; border-top: 1px solid var(--rule); }
+.sec--tight { padding-block: 26px 30px; }
+.sec--tone  { background: var(--pp-2); }
+/* 같은 톤끼리 맞붙는 경계는 한 단계 진하게 — 페이지가 끝난 것처럼 보이는 걸 막는다 */
+.sec + .sec:not(.sec--tone) { border-top-color: var(--rule-2); }
+.sec--plain { border-top: 0; }
+
+.sec__head { margin-bottom: 22px; }
+.sec__head .eyebrow { margin-bottom: 12px; }
+.sec__head .t-bd, .sec__head .t-sm { margin-top: 10px; }
+
+.rule { height: 0; background: none; border: 0; border-top: 1px solid var(--rule); }
+.rule--hd { border-top-color: var(--ink-0); }
+.rule--2  { border-top-color: var(--rule-2); }
+
+/* =========================================================
+   진행바
+   ========================================================= */
+.prog { height: 3px; background: var(--pp-3); }
+.prog__bar {
+  height: 100%;
+  width: 0;
+  background: var(--rd);
+  border-radius: 0;
+  transition: width 0.45s var(--ease);
+}
+
+/* =========================================================
+   상단바 (제자리)
+   ========================================================= */
+.top {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(243, 239, 228, 0.94);
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+}
+.top--line { border-bottom: 1px solid var(--ink-0); }
+.top__in {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--s3); min-height: 52px; padding-inline: var(--pad);
+}
+.top__logo {
+  font-family: var(--serif);
+  font-size: 1.14rem; font-weight: 700;
+  letter-spacing: -0.04em; color: var(--ink-0);
+}
+.top__title { font-size: var(--fs-sm); font-weight: 700; color: var(--ink-1); letter-spacing: -0.02em; }
+.top__step  {
+  font-size: var(--fs-sm); color: var(--ink-3);
+  min-width: 36px; text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.top__step b { color: var(--rd); font-weight: 700; }
+
+.iconbtn {
+  width: 34px; height: 34px;
+  display: grid; place-items: center;
+  background: none; border: none; border-radius: var(--r);
+  cursor: pointer; flex-shrink: 0; color: var(--ink-1);
+  transition: background 0.18s;
+}
+.iconbtn:hover { background: var(--pp-2); }
+.iconbtn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* =========================================================
+   막대 그래프 (점수 구성)
+   마크업은 app.js UI.bars() 가 생성합니다 — 구조를 바꾸지 마세요.
+     <div class="bar">
+       <span class="bar__lb">라벨</span>
+       <span class="bar__tr"><i class="bar__fl bar__fl--rd" data-w="92"></i></span>
+       <span class="bar__vl">92</span>
+     </div>
+   ========================================================= */
+.bars { display: flex; flex-direction: column; gap: 9px; }
+.bar  { display: flex; align-items: center; gap: 9px; }
+.bar__lb {
+  width: 78px; flex: 0 0 78px;
+  font-size: 0.73rem; color: var(--ink-2);
+  letter-spacing: -0.02em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.bar__tr {
+  flex: 1 1 auto; height: 9px;
+  background: var(--pp-3);
+  border-radius: 1px;
+  overflow: hidden;
+}
+.bar__fl {
+  display: block;   /* i 는 인라인 요소 — 이 줄이 없으면 width/height 가 무시된다 */
+  height: 100%;
+  width: 0;         /* 실제 폭은 JS 가 인라인 스타일로 넣는다. 여기서 고정 금지 */
+  border-radius: 1px;
+  background: var(--ink-1);
+  transition: width 0.9s var(--ease);
+}
+.bar__fl--rd { background: var(--rd); }
+.bar__fl--tl { background: var(--tl); }
+.bar__vl {
+  width: 26px; flex: 0 0 26px;
+  text-align: right;
+  font-size: 0.73rem; font-weight: 700;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* =========================================================
+   큰 점수 표시
+   ========================================================= */
+.score {
+  display: flex; align-items: baseline; gap: 5px;
+  font-variant-numeric: tabular-nums;
+}
+.score__n {
+  font-family: var(--serif);
+  font-size: 3.1rem; font-weight: 700; line-height: 1;
+  letter-spacing: -0.05em; color: var(--ink-0);
+}
+.score__u { font-size: var(--fs-sm); color: var(--ink-3); }
+.score--rd .score__n { color: var(--rd); }
+
+/* =========================================================
+   스크롤 등장
+   ========================================================= */
+.rv { opacity: 0; transform: translateY(12px); }
+.rv.is-in {
+  opacity: 1; transform: none;
+  transition: opacity 0.6s var(--ease), transform 0.6s var(--ease);
+}
+
+/* =========================================================
+   하단 고정 도크
+   .dock 은 고정 레이어, .dock__in 이 실제로 올라옵니다.
+   JS 는 .dock 에 .is-on 을 토글합니다.
+   ========================================================= */
+.dock {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+  display: flex; justify-content: center;
+  pointer-events: none;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.dock__in {
+  width: 100%; max-width: var(--col);
+  display: flex; align-items: center; gap: var(--s3);
+  padding: 10px var(--pad) 12px;
+  background: var(--pp-0);
+  border-top: 1px solid var(--ink-0);
+  pointer-events: auto;
+  transform: translateY(115%);
+  transition: transform 0.34s var(--ease);
+}
+.dock.is-on .dock__in { transform: none; }
+.dock__price { display: flex; flex-direction: column; line-height: 1.25; flex-shrink: 0; }
+.dock__lb {
+  font-size: 0.655rem; font-weight: 700;
+  letter-spacing: 0.1em; color: var(--ink-3);
+}
+.dock__now {
+  font-family: var(--serif);
+  font-size: 1.12rem; font-weight: 700;
+  letter-spacing: -0.03em; color: var(--ink-0);
+}
+.dock__btn { flex: 1 1 auto; min-height: 48px; font-size: 0.93rem; padding: 0 16px; }
+.dock-space { height: 96px; }
+
+/* =========================================================
+   판권 · 푸터 (랜딩 · 법적 고지 페이지 공통)
+   .foot__biz 는 site.js 가 사업자정보를 렌더하는 자리 — 지우지 마세요.
+   ========================================================= */
+.foot {
+  background: var(--pp-2);
+  border-top: 1px solid var(--rule-2);
+  padding-block: 30px 34px;
+}
+.foot__logo {
+  font-family: var(--serif);
+  font-size: 0.98rem; font-weight: 700;
+  letter-spacing: -0.03em; color: var(--ink-1);
+}
+.foot__disc {
+  margin-top: 14px; padding-top: 14px;
+  border-top: 1px solid var(--rule-2);
+  font-size: 0.72rem; line-height: 1.75; color: var(--ink-3);
+}
+.foot__nav {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px;
+  margin-top: 16px;
+  font-size: 0.735rem; color: var(--ink-2);
+}
+.foot__nav a { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--rule-2); }
+.foot__nav a:hover { color: var(--rd); }
+.foot__nav span, .foot__nav i {
+  width: 1px; height: 9px; background: var(--rule-2);
+  font-size: 0; font-style: normal; color: transparent;
+}
+.foot__biz { margin-top: 14px; font-size: 0.69rem; line-height: 1.7; color: var(--ink-4); }
+.foot__cp  { margin-top: 12px; font-size: 0.69rem; color: var(--ink-4); }
+
+/* =========================================================
+   접근성
+   ========================================================= */
+.sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+:focus-visible { outline: 2px solid var(--rd); outline-offset: 3px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .rv { opacity: 1; transform: none; }
+  html { scroll-behavior: auto; }
+}
+
+/* 아주 좁은 화면 보정 */
+@media (max-width: 359px) {
+  :root { --pad: 17px; --fs-hero: 2.02rem; }
+}

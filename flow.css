@@ -1,0 +1,921 @@
+/* =========================================================
+   퇴사해말아? · 퍼널 (질문 · 사주 입력 · 로딩)
+   시안 1 "에디토리얼 매거진" — theme.css 토큰만 사용합니다.
+
+   원칙
+   1. 색은 셋뿐 — 종이(아이보리) · 잉크 · 포인트 레드 하나.
+   2. 구획은 여백이 아니라 괘선(rule)이 만든다.
+   3. 명조는 '말하는 것', 산세리프는 '안내하는 것'.
+
+   ※ 이 파일은 result.html / report.html 에서도 로드됩니다.
+      .inp / .hint 는 그쪽에서도 쓰이니 지우지 마세요.
+   ========================================================= */
+
+/* =========================================================
+   진행 괘선 — 7칸으로 끊어 "지금 몇 번째"가 보이게
+   theme.css 의 .prog / .prog__bar 를 퍼널에서만 덮어씁니다.
+   JS 는 .prog__bar 의 width 인라인 스타일만 건드립니다.
+   ========================================================= */
+.prog {
+  position: relative;
+  height: 8px;
+  overflow: hidden;
+  background: var(--pp-3);
+  border-bottom: 1px solid var(--rule-2);
+}
+.prog__bar { background: var(--rd); }
+/* 7등분 눈금 — 지면색으로 잘라 칸을 만든다 (마지막 칸 눈금은 밖으로 밀어 자름) */
+.prog::after {
+  content: "";
+  position: absolute;
+  inset: 0 -2px 0 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0,
+    transparent calc(100% / 7 - 2px),
+    var(--pp-1) calc(100% / 7 - 2px),
+    var(--pp-1) calc(100% / 7)
+  );
+}
+
+/* 상단바 회차 표기 — 명조 숫자 */
+.top__step {
+  font-family: var(--serif);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--ink-3);
+}
+.top__step b { color: var(--rd); }
+.top__step--last {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--rd);
+  border: 1px solid var(--rd);
+  border-radius: var(--r);
+  padding: 2px 7px 3px;
+  min-width: 0;
+}
+
+/* =========================================================
+   퍼널 본문
+   ========================================================= */
+.flow { padding: 26px var(--pad) 36px; }
+
+/* 질문 화면 — 지면 한 장을 세로로 채운다 (상단바 52 + 괘선 9) */
+.flow--q {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 61px);
+}
+@supports (min-height: 100dvh) {
+  .flow--q { min-height: calc(100dvh - 61px); }
+}
+.stage { flex: 1 1 auto; display: flex; flex-direction: column; }
+
+/* ---------- 질문 스텝 ---------- */
+.qstep {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  animation: stepIn 0.36s var(--ease) both;
+}
+@keyframes stepIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* 회차 머리표 — 붉은 짧은 괘선 + 오른쪽 끝까지 흐르는 가는 괘선 */
+.qstep__no {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--fs-2xs);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  color: var(--rd);
+  margin: 0 0 15px;
+}
+.qstep__no::before {
+  content: "";
+  flex: 0 0 22px;
+  height: 2px;
+  background: var(--rd);
+}
+.qstep__no::after {
+  content: "";
+  flex: 1 1 auto;
+  height: 1px;
+  background: var(--rule-2);
+}
+
+.qstep__title {
+  font-family: var(--serif);
+  font-size: clamp(1.42rem, 6.4vw, 1.68rem);
+  font-weight: 700;
+  line-height: 1.42;
+  letter-spacing: -0.042em;
+  color: var(--ink-0);
+  margin: 0 0 12px;
+}
+.qstep__desc {
+  font-size: var(--fs-sm);
+  line-height: 1.7;
+  color: var(--ink-3);
+  margin: 0 0 4px;
+}
+
+/* =========================================================
+   선택지 — 지면 위에 얹은 백지 카드 (세로 중앙 정렬)
+   마크업(diagnose.js 생성):
+     <button class="opt"><span class="opt__t">…</span><span class="opt__c"></span></button>
+   번호는 CSS 카운터로 붙입니다.
+   ========================================================= */
+/* 머리 괘선은 제목 바로 아래에 붙이고, 남는 세로 공간은
+   카드가 나눠 가진다 (최대 120px) — 화면이 비어 보이지 않게. */
+.opts {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1.5px solid var(--ink-0);
+  counter-reset: opt;
+}
+.opt {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 58px;
+  max-height: 120px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  text-align: left;
+  padding: 11px 14px;
+  background: var(--pp-0);
+  border: 1px solid var(--rule-2);
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, box-shadow 0.18s,
+              transform 0.12s var(--ease);
+  -webkit-tap-highlight-color: transparent;
+}
+/* 번호 칸 — 세로 괘선으로 나눈 장부 한 줄처럼 */
+.opt::before {
+  counter-increment: opt;
+  content: counter(opt, decimal-leading-zero);
+  flex: 0 0 auto;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  padding-right: 13px;
+  border-right: 1px solid var(--rule);
+  font-family: var(--serif);
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--ink-4);
+  font-variant-numeric: tabular-nums;
+  transition: color 0.18s, border-color 0.18s;
+}
+/* 왼쪽 붉은 괘선 — hover / 선택 시 그어진다 */
+.opt::after {
+  content: "";
+  position: absolute;
+  left: -1px; top: -1px; bottom: -1px;
+  width: 3px;
+  background: var(--rd);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.2s var(--ease);
+}
+.opt:hover {
+  background: #fff;
+  border-color: var(--ink-0);
+  transform: translateY(-1px);
+  box-shadow: var(--sh-1);
+}
+.opt:hover::after { transform: none; }
+.opt:hover::before { color: var(--rd); border-right-color: var(--rule-2); }
+.opt:active { transform: translateY(1px); box-shadow: none; }
+
+.opt__t {
+  flex: 1 1 auto;
+  font-size: 1.005rem;
+  line-height: 1.5;
+  font-weight: 500;
+  letter-spacing: -0.022em;
+  color: var(--ink-1);
+}
+/* 표식은 원이 아니라 각진 네모 — 에디토리얼 */
+.opt__c {
+  position: relative;
+  width: 19px; height: 19px;
+  flex: 0 0 19px;
+  background: var(--pp-1);
+  border: 1.5px solid var(--rule-2);
+  border-radius: 1px;
+  transition: border-color 0.18s, background 0.18s;
+}
+.opt:hover .opt__c { border-color: var(--ink-3); }
+
+.opt.is-on {
+  background: var(--rd-tn);
+  border-color: var(--rd);
+  box-shadow: inset 0 0 0 1px var(--rd);
+  transform: none;
+}
+.opt.is-on::after { transform: none; }
+.opt.is-on::before { color: var(--rd); border-right-color: rgba(176, 42, 30, 0.35); }
+.opt.is-on .opt__t { font-weight: 700; color: var(--ink-0); }
+.opt.is-on .opt__c { background: var(--rd); border-color: var(--rd); }
+.opt.is-on .opt__c::after {
+  content: "";
+  position: absolute;
+  left: 4.5px; top: 5px;
+  width: 6px; height: 3px;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  transform: rotate(-45deg);
+}
+
+/* =========================================================
+   자유 입력 (마지막 질문)
+   ========================================================= */
+.ta {
+  width: 100%;
+  min-height: 138px;
+  max-height: 320px;
+  margin-top: 18px;
+  padding: 15px var(--s4);
+  background: var(--pp-0);
+  border: 1px solid var(--rule-2);
+  border-top: 1.5px solid var(--ink-0);
+  border-radius: var(--r);
+  font-family: var(--sans);
+  font-size: var(--fs-bd);
+  line-height: 1.75;
+  color: var(--ink-0);
+  resize: none;
+  outline: none;
+  transition: border-color 0.18s, background 0.18s;
+}
+.ta::placeholder { color: var(--ink-4); }
+.ta:focus { background: #fff; border-color: var(--rd); border-top-color: var(--rd); }
+.ta__count {
+  margin: 7px 0 0;
+  text-align: right;
+  font-size: var(--fs-2xs);
+  color: var(--ink-4);
+  font-variant-numeric: tabular-nums;
+}
+/* 자유 입력 화면도 같은 리듬 — 입력칸이 남는 높이를 먹는다 */
+.flow--q .ta { flex: 1 1 auto; }
+.qstep__skip { margin-top: var(--s2); }
+
+/* =========================================================
+   화면 밑단 안내 (질문 화면 고정 자리)
+   ========================================================= */
+.flow__foot {
+  margin-top: 26px;
+  padding-top: 13px;
+  border-top: 1px solid var(--rule);
+}
+.flow__note {
+  font-size: var(--fs-2xs);
+  line-height: 1.7;
+  color: var(--ink-3);
+}
+.flow__note b { color: var(--ink-1); font-weight: 700; }
+.flow__note + .flow__note { margin-top: 5px; color: var(--ink-4); }
+
+/* =========================================================
+   사주 입력 — 묶음(fieldset)
+   ========================================================= */
+.fset { margin-top: var(--s7); }
+.fset__h {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 15px;
+  padding-bottom: 9px;
+  border-bottom: 1.5px solid var(--ink-0);
+  font-family: var(--serif);
+  font-size: var(--fs-h3);
+  font-weight: 700;
+  letter-spacing: -0.032em;
+  color: var(--ink-0);
+}
+.fset__h i {
+  flex: 0 0 auto;
+  font-family: var(--serif);
+  font-style: normal;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: 0.04em;
+  color: var(--rd);
+  border: 1px solid var(--rd);
+  border-radius: 1px;
+  padding: 1px 5px 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 입력 필드 ---------- */
+.fld__lb {
+  display: block;
+  font-size: var(--fs-2xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+  margin-bottom: 7px;
+}
+.fld__lb--mt { margin-top: var(--s5); }
+
+.inp {
+  width: 100%;
+  background: var(--pp-0);
+  border: 1px solid var(--rule-2);
+  border-radius: var(--r);
+  padding: 14px var(--s4);
+  font-size: 1rem;
+  color: var(--ink-0);
+  outline: none;
+  transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
+  -webkit-appearance: none; appearance: none;
+}
+.inp::placeholder { color: var(--ink-4); }
+.inp:focus {
+  background: #fff;
+  border-color: var(--rd);
+  box-shadow: inset 0 0 0 1px var(--rd);
+}
+.inp--n {
+  text-align: center;
+  padding-inline: 10px 28px;
+  font-family: var(--serif);
+  font-size: 1.06rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.inp--n::-webkit-outer-spin-button,
+.inp--n::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.inp--n { -moz-appearance: textfield; }
+.inp--sel {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7'%3E%3Cpath fill='none' stroke='%236B655C' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' d='M1 1l4.5 4.5L10 1'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 42px;
+}
+
+/* 년 / 월 / 일 */
+.fld { position: relative; display: block; }
+.fld__u {
+  position: absolute;
+  right: 11px; top: 50%;
+  transform: translateY(-50%);
+  font-size: var(--fs-2xs);
+  color: var(--ink-4);
+  pointer-events: none;
+}
+.row3 { display: flex; gap: var(--s2); }
+.row3 > * { flex: 1 1 0; min-width: 0; }
+.row3 .inp { width: 100%; }
+
+/* 2단 배치 (성별 · 양력/음력) */
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s3);
+  margin-top: var(--s5);
+}
+
+/* ---------- 세그먼트 — 각진 활자 블록 ---------- */
+.seg {
+  display: flex;
+  overflow: hidden;
+  background: var(--pp-0);
+  border: 1px solid var(--rule-2);
+  border-radius: var(--r);
+}
+.seg__b {
+  flex: 1 1 0;
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  padding: 13px 4px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.seg__b + .seg__b { border-left: 1px solid var(--rule-2); }
+.seg__b:hover { background: var(--pp-2); color: var(--ink-1); }
+.seg__b.is-on { background: var(--ink-0); color: var(--pp-0); }
+.seg__b.is-on:hover { background: var(--ink-1); color: var(--pp-0); }
+
+/* ---------- 보조 문구 ---------- */
+.hint {
+  margin-top: 9px;
+  padding-left: 10px;
+  border-left: 2px solid var(--rule-2);
+  font-size: var(--fs-2xs);
+  line-height: 1.65;
+  color: var(--ink-3);
+}
+
+/* 윤달 체크박스 */
+.chk {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  margin-top: var(--s3);
+  cursor: pointer;
+  font-size: var(--fs-sm);
+  color: var(--ink-1);
+  user-select: none;
+}
+.chk input {
+  width: 18px; height: 18px;
+  accent-color: var(--rd);
+  cursor: pointer;
+}
+.chk.is-off { opacity: 0.4; cursor: not-allowed; }
+.chk.is-off input { cursor: not-allowed; }
+
+.err {
+  margin: var(--s6) 0 9px;
+  min-height: 20px;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--rd);
+  letter-spacing: -0.01em;
+}
+.privacy {
+  margin-top: var(--s4);
+  padding-top: 13px;
+  border-top: 1px solid var(--rule);
+  font-size: var(--fs-2xs);
+  line-height: 1.75;
+  color: var(--ink-3);
+  text-align: center;
+}
+
+/* =========================================================
+   개인정보 수집 동의 (법적 필수 — 구조를 지우지 마세요)
+   ========================================================= */
+.consent {
+  background: var(--pp-0);
+  border: 1px solid var(--rule-2);
+  border-radius: var(--r);
+  padding: 5px var(--s4) var(--s4);
+}
+.consent__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 11px 0 10px;
+  cursor: pointer;
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  color: var(--ink-1);
+}
+.consent__row input {
+  width: 18px; height: 18px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  accent-color: var(--rd);
+  cursor: pointer;
+}
+.consent__row b {
+  font-family: var(--serif);
+  font-size: 0.96rem;
+  font-weight: 700;
+  letter-spacing: -0.032em;
+  color: var(--ink-0);
+}
+.consent__row em { font-style: normal; font-weight: 700; color: var(--rd); }
+.consent__row em.is-opt { color: var(--ink-3); }
+.consent__rule {
+  height: 0;
+  border: 0;
+  border-top: 1.5px solid var(--ink-0);
+  margin: 0 0 2px;
+}
+
+.consent__more { margin: -4px 0 2px 29px; }
+.consent__more summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  list-style: none;
+  cursor: pointer;
+  padding: 2px 0;
+  font-size: var(--fs-2xs);
+  color: var(--ink-3);
+  text-decoration: underline;
+  text-decoration-color: var(--rule-2);
+  text-underline-offset: 3px;
+}
+.consent__more summary::-webkit-details-marker { display: none; }
+.consent__more summary::after {
+  content: "＋";
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--rd);
+  text-decoration: none;
+}
+.consent__more[open] summary::after { content: "－"; }
+.consent__box {
+  margin-top: 8px;
+  padding: 11px 13px;
+  background: var(--pp-2);
+  border-left: 2px solid var(--rule-2);
+  border-radius: 0;
+}
+.consent__box p {
+  font-size: var(--fs-2xs);
+  line-height: 1.75;
+  color: var(--ink-2);
+  margin-bottom: 8px;
+}
+.consent__box p:last-child { margin-bottom: 0; }
+.consent__box b { color: var(--ink-0); font-weight: 700; }
+.consent__note {
+  color: var(--ink-3) !important;
+  padding-top: 7px;
+  border-top: 1px solid var(--rule-2);
+}
+.consent__hi { color: var(--rd); font-weight: 700; }
+.consent__link {
+  margin-top: var(--s3);
+  padding-top: 10px;
+  border-top: 1px solid var(--rule);
+  font-size: var(--fs-2xs);
+  line-height: 1.7;
+  color: var(--ink-3);
+}
+.consent__link a {
+  color: var(--ink-1);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--rule-2);
+}
+.consent__link a:hover { color: var(--rd); }
+.doc__fill { color: var(--rd); font-weight: 700; }
+
+/* =========================================================
+   로딩 — 조판 중인 지면
+   ========================================================= */
+.load {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--s8) var(--pad) var(--s9);
+}
+@supports (min-height: 100dvh) {
+  .load { min-height: 100dvh; }
+}
+
+.load__chip { margin-bottom: 20px; }
+
+/* 활자 도판 — 잉크 판 위의 일간(日干) */
+.load__art {
+  position: relative;
+  width: 176px; height: 176px;
+  margin-bottom: 26px;
+  background: var(--ink-0);
+  border: 1px solid var(--ink-0);
+  box-shadow: 0 0 0 4px var(--pp-1), 0 0 0 5px var(--rule-2);
+  overflow: hidden;
+}
+.load__svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.load__ring  { transform-origin: 88px 88px; animation: spin 9s linear infinite; }
+.load__ring2 { transform-origin: 88px 88px; animation: spin 6s linear infinite reverse; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.load__core {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--serif);
+  font-size: 3.15rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--pp-1);
+  text-shadow: 0 0 28px rgba(243, 239, 228, 0.3);
+}
+/* 조판 스캔선 */
+.load__scan {
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--rd), transparent);
+  animation: scan 2.8s var(--ease) infinite;
+}
+@keyframes scan {
+  0%   { top: 4%;  opacity: 0; }
+  14%  { opacity: 0.95; }
+  86%  { opacity: 0.95; }
+  100% { top: 96%; opacity: 0; }
+}
+
+.load__title {
+  font-family: var(--serif);
+  font-size: 1.34rem;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: -0.038em;
+  color: var(--ink-0);
+  min-height: 2.2em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.load__name {
+  margin-top: 6px;
+  font-size: var(--fs-xs);
+  line-height: 1.6;
+  color: var(--ink-3);
+}
+
+.load__meter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 264px;
+  margin-top: 26px;
+}
+.load__bar {
+  flex: 1 1 auto;
+  height: 6px;
+  background: var(--pp-3);
+  overflow: hidden;
+}
+.load__bar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--rd);
+  transition: width 0.3s linear;
+}
+.load__pct {
+  flex: 0 0 auto;
+  font-family: var(--serif);
+  font-size: 0.76rem;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.load__pct b { font-size: 1.02rem; font-weight: 700; color: var(--rd); }
+
+/* 단계 장부 */
+.load__steps {
+  list-style: none;
+  width: 100%;
+  max-width: 300px;
+  margin-top: 26px;
+  text-align: left;
+  border-top: 1.5px solid var(--ink-0);
+  counter-reset: ls;
+}
+.load__steps li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 4px 10px 11px;
+  border-bottom: 1px solid var(--rule);
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+  color: var(--ink-4);
+  transition: color 0.3s, box-shadow 0.3s, background 0.3s;
+}
+.load__steps li::before {
+  counter-increment: ls;
+  content: counter(ls, decimal-leading-zero);
+  flex: 0 0 auto;
+  font-family: var(--serif);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--ink-4);
+  font-variant-numeric: tabular-nums;
+  transition: color 0.3s;
+}
+.load__steps span {
+  order: 3;
+  margin-left: auto;
+  width: 15px; height: 15px;
+  flex: 0 0 15px;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid var(--rule-2);
+  border-radius: 1px;
+  font-size: 9px;
+  transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+.load__steps li.is-on {
+  color: var(--ink-0);
+  font-weight: 700;
+  background: var(--rd-tn);
+  box-shadow: inset 2px 0 0 var(--rd);
+}
+.load__steps li.is-on::before { color: var(--rd); }
+.load__steps li.is-on span { border-color: var(--rd); box-shadow: 0 0 0 3px var(--rd-tn); }
+.load__steps li.is-done { color: var(--ink-3); }
+.load__steps li.is-done span { background: var(--rd); border-color: var(--rd); }
+.load__steps li.is-done span::after { content: "✓"; color: #fff; font-weight: 700; }
+
+.load__note {
+  max-width: 300px;
+  margin-top: 20px;
+  font-size: var(--fs-2xs);
+  line-height: 1.7;
+  color: var(--ink-4);
+}
+
+/* =========================================================
+   아주 좁은 화면
+   ========================================================= */
+@media (max-width: 359px) {
+  .opt { padding-inline: 12px; gap: 10px; }
+  .opt::before { padding-right: 10px; font-size: 0.74rem; }
+  .opt__t { font-size: 0.93rem; }
+  .inp--n { padding-inline: 6px 22px; font-size: 1rem; }
+  .fld__u { right: 8px; }
+  .seg__b { font-size: 0.8rem; padding-inline: 2px; }
+  .fset__h { font-size: 1rem; }
+  .load__art { width: 150px; height: 150px; }
+  .load__core { font-size: 2.7rem; }
+  .load__title { font-size: 1.2rem; }
+}
+
+/* ═══════════════════════════════════════════════════════
+   새 질문 유형 — 복수선택 · 양극선택 · 척도
+   화면 하나에 질문 하나. 탭 한 번으로 답할 수 있게.
+   ═══════════════════════════════════════════════════════ */
+
+/* ── 복수선택 ──────────────────────────────────────────
+   층(준비행동/적극행동) 구분선을 절대 넣지 않는다.
+   사용자가 "아래쪽이 진짜"라고 눈치채면 응답이 왜곡된다. */
+.opts--multi { gap: 7px; }
+
+.opts--multi .opt {
+  flex: 0 0 auto;
+  min-height: 52px;
+  max-height: none;
+  padding: 11px 14px;
+}
+
+/* 체크 표시 — 단일선택의 원형과 구분되게 네모로 */
+.opt--chk .opt__c {
+  border-radius: 2px;
+}
+.opt--chk.is-on .opt__c::after {
+  content: "";
+  position: absolute;
+  left: 50%; top: 46%;
+  width: 5px; height: 9px;
+  border: solid var(--pp-0);
+  border-width: 0 2px 2px 0;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+/* ── 양극선택 ────────────────────────────────────────── */
+.bw__lb {
+  margin: var(--s4) 0 var(--s2);
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  color: var(--rd);
+}
+.bw__lb:first-child { margin-top: 0; }
+
+.bw__opt {
+  margin-left: 6px;
+  font-size: .72rem;
+  font-weight: 400;
+  color: var(--ink-3);
+}
+
+.opts--bw {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: var(--s3);
+}
+
+.opt--sm {
+  flex: 0 0 auto;
+  min-height: 0;
+  max-height: none;
+  width: auto;
+  padding: 9px 13px;
+  font-size: .86rem;
+  border-radius: 3px;
+}
+.opt--sm .opt__t { font-size: .86rem; }
+.opt--sm::before, .opt--sm .opt__c { display: none; }
+
+/* ── 척도 (0~10) ─────────────────────────────────────── */
+.scale { margin-top: var(--s3); }
+
+.scale__row {
+  display: grid;
+  grid-template-columns: repeat(11, 1fr);
+  gap: 4px;
+}
+
+.scale__n {
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: var(--pp-0);
+  border: 1px solid var(--rule-2);
+  border-radius: 3px;
+  font-family: var(--serif);
+  font-size: .88rem;
+  font-weight: 600;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: background .12s, border-color .12s, color .12s;
+}
+.scale__n:hover { border-color: var(--rd); }
+.scale__n.is-on {
+  background: var(--rd);
+  border-color: var(--rd);
+  color: var(--pp-0);
+}
+
+.scale__ends {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 9px;
+  font-size: .74rem;
+  color: var(--ink-3);
+}
+
+/* ── 척도 뒤에 붙는 후속 질문 ────────────────────────── */
+.qfollow {
+  margin-top: var(--s4);
+  padding-top: var(--s4);
+  border-top: 1px solid var(--rule);
+}
+.qfollow__t {
+  margin: 0 0 var(--s2);
+  font-size: .92rem;
+  font-weight: 600;
+  color: var(--ink-0);
+}
+
+/* ── 한 화면에 붙는 부속 질문 ────────────────────────── */
+.qsub {
+  margin-top: var(--s4);
+  padding-top: var(--s4);
+  border-top: 1px solid var(--rule);
+}
+.qsub__t {
+  margin: 0 0 var(--s2);
+  font-size: .92rem;
+  font-weight: 600;
+  color: var(--ink-0);
+}
+.qsub .opts--bw, .qsub .opts { margin-bottom: 0; }
+
+/* 부속 질문의 선택지는 작게 — 주 질문과 위계를 만든다 */
+.qsub .opt {
+  flex: 0 0 auto;
+  min-height: 46px;
+  max-height: none;
+}
+
+/* 선택지가 적은 질문(척도 등)에서 버튼이 화면 위쪽에 붙어
+   허전해 보이는 것을 막는다. 질문 영역이 남는 공간을 먹게 한다. */
+.qstep {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+.qstep > .scale,
+.qstep > .opts,
+.qstep > .qsub,
+.qstep > .ta {
+  flex: 0 0 auto;
+}
+.qstep > .btn { margin-top: auto; }
+.qstep > .btn + .btn { margin-top: var(--s2); }

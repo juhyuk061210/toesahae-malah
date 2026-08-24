@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>사주 정보 입력 | 퇴사해말아?</title>
+<meta name="theme-color" content="#F3EFE4" />
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
+<link rel="stylesheet" as="style" crossorigin
+  href="https://cdnjs.cloudflare.com/ajax/libs/pretendard/1.3.9/variable/pretendardvariable-dynamic-subset.min.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&display=swap" />
+<link rel="stylesheet" href="theme.css" />
+<link rel="stylesheet" href="flow.css" />
+</head>
+<body>
+<div class="shell">
+
+  <header class="top top--line">
+    <div class="top__in">
+      <button class="iconbtn" id="back" type="button" aria-label="이전">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <span class="top__title">사주 정보</span>
+      <span class="top__step top__step--last">마지막</span>
+    </div>
+    <div class="prog"><div class="prog__bar" style="width:100%"></div></div>
+  </header>
+
+  <main class="flow">
+    <div class="qstep">
+      <p class="qstep__no">마지막 단계</p>
+      <h2 class="qstep__title">이제 타고난<br />직장 흐름을 함께 볼게요</h2>
+      <p class="qstep__desc">
+        생년월일은 절기 기준 만세력으로 사주를 세우는 데에만 씁니다.
+        회원가입도, 연락처도 필요 없어요.
+      </p>
+
+      <!-- ============ 01 사주 정보 ============ -->
+      <section class="fset">
+        <h3 class="fset__h"><i>01</i>누구의 사주를 볼까요</h3>
+
+        <label class="fld__lb" for="name">어떻게 불러드릴까요</label>
+        <input class="inp" type="text" id="name" maxlength="10" placeholder="이름 또는 별명" autocomplete="off" />
+
+        <div class="grid2">
+          <div>
+            <span class="fld__lb">성별</span>
+            <div class="seg" id="gender">
+              <button class="seg__b" type="button" data-v="M">남자</button>
+              <button class="seg__b" type="button" data-v="F">여자</button>
+            </div>
+          </div>
+          <div>
+            <span class="fld__lb">양력 / 음력</span>
+            <div class="seg" id="cal">
+              <button class="seg__b is-on" type="button" data-v="solar">양력</button>
+              <button class="seg__b" type="button" data-v="lunar">음력</button>
+            </div>
+          </div>
+        </div>
+
+        <label class="chk" id="leapWrap" hidden>
+          <input type="checkbox" id="isLeap" />
+          <span>윤달이에요</span>
+        </label>
+        <p class="hint" id="lunarHint" hidden>
+          입력하신 음력 날짜를 양력으로 변환해 사주를 계산합니다.
+        </p>
+
+        <span class="fld__lb fld__lb--mt">생년월일</span>
+        <div class="row3">
+          <span class="fld">
+            <input class="inp inp--n" type="number" id="y" placeholder="1993" inputmode="numeric" aria-label="태어난 해" />
+            <i class="fld__u">년</i>
+          </span>
+          <span class="fld">
+            <input class="inp inp--n" type="number" id="m" placeholder="4" inputmode="numeric" aria-label="태어난 달" />
+            <i class="fld__u">월</i>
+          </span>
+          <span class="fld">
+            <input class="inp inp--n" type="number" id="d" placeholder="18" inputmode="numeric" aria-label="태어난 날" />
+            <i class="fld__u">일</i>
+          </span>
+        </div>
+
+        <label class="fld__lb fld__lb--mt" for="tenure">지금 회사 근속</label>
+        <select class="inp inp--sel" id="tenure">
+          <option value="">선택해주세요</option>
+          <option value="u1">1년 미만</option>
+          <option value="1_3">1~3년</option>
+          <option value="3_5">3~5년</option>
+          <option value="5_7">5~7년</option>
+          <option value="7_10">7~10년</option>
+          <option value="o10">10년 이상</option>
+        </select>
+
+        <label class="fld__lb fld__lb--mt" for="h">태어난 시간</label>
+        <select class="inp inp--sel" id="h">
+          <option value="unknown">시간을 몰라요</option>
+          <option value="23">자시 (23:00~00:59)</option>
+          <option value="1">축시 (01:00~02:59)</option>
+          <option value="3">인시 (03:00~04:59)</option>
+          <option value="5">묘시 (05:00~06:59)</option>
+          <option value="7">진시 (07:00~08:59)</option>
+          <option value="9">사시 (09:00~10:59)</option>
+          <option value="11">오시 (11:00~12:59)</option>
+          <option value="13">미시 (13:00~14:59)</option>
+          <option value="15">신시 (15:00~16:59)</option>
+          <option value="17">유시 (17:00~18:59)</option>
+          <option value="19">술시 (19:00~20:59)</option>
+          <option value="21">해시 (21:00~22:59)</option>
+        </select>
+        <p class="hint">시간을 모르셔도 진단은 가능해요. 알면 하루의 흐름까지 더 정밀해집니다.</p>
+      </section>
+
+      <!-- ============ 02 개인정보 수집·이용 동의 (법적 필수) ============ -->
+      <section class="fset">
+        <h3 class="fset__h"><i>02</i>개인정보 수집·이용 동의</h3>
+
+        <div class="consent">
+          <label class="consent__row">
+            <input type="checkbox" id="agreeAll" />
+            <b>전체 동의</b>
+          </label>
+          <hr class="consent__rule" />
+
+          <label class="consent__row">
+            <input type="checkbox" id="agreeRequired" data-req="1" />
+            <span><em>(필수)</em> 개인정보 수집·이용 동의</span>
+          </label>
+          <details class="consent__more">
+            <summary>내용 보기</summary>
+            <div class="consent__box">
+              <p><b>수집 항목</b><br />
+                필수 &mdash; 성별, 생년월일(양력/음력), 근속 기간, 직장 상황 설문 응답<br />
+                선택 &mdash; 이름 또는 별명, 태어난 시간, 현재 고민 서술</p>
+              <p><b>수집 목적</b><br />사주 분석 및 맞춤형 진단 리포트 생성·제공</p>
+              <p><b>보유 기간</b><br />수집일로부터 <span class="doc__fill">[보유기간]</span>
+                (관련 법령에 따라 보존이 필요한 경우 해당 기간까지)</p>
+              <p class="consent__note">동의를 거부할 수 있으나, 필수 항목에 동의하지 않으면
+                사주 분석을 제공할 수 없어 서비스 이용이 제한됩니다.</p>
+            </div>
+          </details>
+
+          <label class="consent__row">
+            <input type="checkbox" id="agreeAI" />
+            <span><em class="is-opt">(선택)</em> AI 해설 생성을 위한 개인정보 국외 이전 동의</span>
+          </label>
+          <details class="consent__more">
+            <summary>내용 보기</summary>
+            <div class="consent__box">
+              <p><b>이전받는 자</b> Anthropic, PBC (미국)</p>
+              <p><b>이전 항목</b> 사주 분석 결과값, 설문 응답, 입력하신 고민 문장<br />
+                <span class="consent__hi">이름·이메일·연락처는 전송하지 않습니다.</span></p>
+              <p><b>이전 목적</b> 진단 결과 해설 문장 생성</p>
+              <p class="consent__note">동의하지 않아도 리포트는 정상 제공되며,
+                해설이 AI 문장 대신 규칙 기반 문장으로 작성됩니다.</p>
+            </div>
+          </details>
+
+          <label class="consent__row">
+            <input type="checkbox" id="agreeMkt" />
+            <span><em class="is-opt">(선택)</em> 광고성 정보 수신 동의</span>
+          </label>
+          <details class="consent__more">
+            <summary>내용 보기</summary>
+            <div class="consent__box">
+              <p><b>수신 내용</b> 새로운 사주 리포트·서비스 안내, 할인 정보</p>
+              <p><b>수신 방법</b> 이메일 (입력하신 경우에 한함)</p>
+              <p><b>철회</b> 언제든 수신 거부하실 수 있으며, 메일 하단 링크 또는 문의처로 요청하시면 즉시 처리됩니다.</p>
+              <p class="consent__note">동의하지 않아도 리포트 이용에는 아무런 제한이 없습니다.</p>
+            </div>
+          </details>
+
+          <p class="consent__link">
+            자세한 내용은 <a href="privacy.html" target="_blank" rel="noopener">개인정보처리방침</a>과
+            <a href="terms.html" target="_blank" rel="noopener">이용약관</a>을 확인해주세요.
+          </p>
+        </div>
+      </section>
+
+      <p class="err" id="err"></p>
+      <button class="btn btn--pri btn--full" id="go" type="button">
+        무료 진단 결과 보기 <span class="btn__ar" aria-hidden="true">→</span>
+      </button>
+
+      <p class="privacy">
+        회사명·상사 이름 등 제3자를 식별할 수 있는 정보는 받지 않습니다.
+      </p>
+    </div>
+  </main>
+
+</div>
+
+<script src="config.js"></script>
+<script src="site.js"></script>
+<script src="solar-terms.js"></script>
+<script src="lunar-table.js"></script>
+<script src="saju.js"></script>
+<script src="diagnosis.js"></script>
+<script src="questions.js"></script>
+<script src="bridge.js"></script>
+<script src="tension.js"></script>
+<script src="app.js"></script>
+<script src="birth.js"></script>
+</body>
+</html>

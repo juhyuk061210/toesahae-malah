@@ -166,6 +166,16 @@
   var MOVE_SIP = { 상관: 12, 식신: 7, 겁재: 9, 비견: 6, 편재: 8, 정재: 2 };
   var STAY_SIP = { 정관: -10, 편관: -5, 정인: -7, 편인: -3 };
 
+  /* 받침 유무로 조사를 고른다. "회사 환경과(와)" 같은 표기가 남으면
+     손님은 그 한 곳 때문에 나머지 문장까지 기계가 썼다고 본다. */
+  function josa(w, withB, without) {
+    var t = String(w), c = t.charCodeAt(t.length - 1);
+    if (c < 0xac00 || c > 0xd7a3) return withB;
+    return ((c - 0xac00) % 28) ? withB : without;
+  }
+  function iga(w) { return w + josa(w, "이", "가"); }
+  function wagwa(w) { return w + josa(w, "과", "와"); }
+
   function sipDelta(name) {
     if (MOVE_SIP[name] !== undefined) return MOVE_SIP[name];
     if (STAY_SIP[name] !== undefined) return STAY_SIP[name];
@@ -811,15 +821,25 @@
             { k: "직무적합", v: split.직무적합 },
             { k: "관계스트레스", v: split.관계스트레스 }
           ].sort(function (x, y) { return y.v - x.v; });
-          var top = rows[0].k, gap = rows[0].v - rows[2].v;
+          var top = rows[0].k;
+          /* 손님은 세 숫자를 눈으로 보고 있다. 68 / 66 / 42 를 놓고
+             "한쪽으로 확실히 기웁니다" 라고 하면 그 자리에서 신뢰가 깨진다.
+             1등과 3등의 격차가 아니라 **1등과 2등의 격차**로 말해야 한다.
+             그게 실제로 "어느 쪽이냐"를 가르는 숫자다. */
+          var lead = rows[0].v - rows[1].v;   // 1등 - 2등
+          var span = rows[0].v - rows[2].v;   // 1등 - 3등
 
           var head = LB[top] + " " + rows[0].v + "점, 나머지는 " +
                      LB[rows[1].k] + " " + rows[1].v + "점 · " +
                      LB[rows[2].k] + " " + rows[2].v + "점입니다. ";
 
-          var howFar = gap >= 25 ? "한쪽으로 확실히 기웁니다. "
-                     : gap >= 10 ? "차이가 눈에 보입니다. "
-                     : "세 개가 거의 붙어 있습니다. ";
+          var howFar =
+              lead >= 18 ? "한쪽으로 확실히 기웁니다. "
+            : lead >= 8  ? "차이가 눈에 보입니다. "
+            : lead >= 4  ? "1위와 2위가 가깝습니다. 둘을 같이 보셔야 합니다. "
+            : span >= 15 ? wagwa(LB[top]) + " " + iga(LB[rows[1].k]) +
+                           " 거의 붙어 있고, " + LB[rows[2].k] + "만 떨어져 있습니다. "
+            : "세 개가 거의 붙어 있습니다. ";
 
           var SAY = {
             회사환경: ["일 자체보다 그 일이 놓인 자리에서 깎이고 있습니다.",
@@ -834,26 +854,18 @@
           };
           var flat0 = split.관계스트레스;
           var hh = (split.회사환경 * 31 + split.직무적합 * 17 + flat0 * 7) % 3;
-          var mid = gap < 10
+          /* 1·2위가 붙어 있으면 한쪽을 원인이라고 부르지 않는다 */
+          var mid = lead < 4
             ? "원인을 하나로 좁히기 어렵습니다. 한 군데만 손봐서는 잘 안 바뀝니다."
             : SAY[top][hh];
 
-          /* 여기서 "직접 고르신 이유와 계산이 일치합니다" 라고 쓰면 안 된다.
-             이 점수 자체가 그 선택에서 계산된 값이라, 일치는 당연한 결과다.
-             당연한 걸 증거처럼 내미는 건 가짜 근거다.
-
-             반대로 *어긋나는* 경우는 진짜 정보다. 다른 답변들(실제로 한 행동,
-             스스로 붙인 말 등)에서 만들어진 축이 그 선택을 이겼다는 뜻이기 때문이다.
-             그래서 어긋날 때만 말한다. */
-          var MAPD = { person: "관계스트레스", culture: "회사환경", load: "회사환경",
-                       meaning: "직무적합", fair: "회사환경", money: "회사환경",
-                       growth: "직무적합", future: "직무적합" };
-          var picked = a && a._drainTop ? MAPD[a._drainTop] : null;
-          var tail = (picked && gap >= 10 && picked !== top)
-            ? " 가장 지치게 하는 것으로 고르신 항목은 다른 쪽이었습니다. " +
-              "고르신 것보다 실제로 답하신 행동 쪽이 더 무겁게 나왔다는 뜻이라, 이 어긋남이 단서가 됩니다."
-            : "";
-          return head + howFar + mid + tail;
+          /* 예전에 여기에 "고르신 이유와 계산이 일치/어긋납니다" 문장을 뒀다가 뺐다.
+             일치 쪽은 순환 논리다 — 이 점수 자체가 그 선택에서 계산된 값이라
+             일치는 당연한 결과이고, 당연한 걸 증거처럼 내미는 건 가짜 근거다.
+             어긋남 쪽은 진짜 정보지만, 전수 확인 결과 고르신 항목이
+             1·2위 밖으로 나가는 경우가 0%였다. 구조상 발동할 수 없는 문장이다.
+             정직하게 쓸 수 없으면 안 쓴다. */
+          return head + howFar + mid;
         })()
       }
     ];

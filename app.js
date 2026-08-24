@@ -96,7 +96,13 @@
 
     /* 필요한 데이터가 없으면 앞 단계로 되돌린다 */
     require: function (what) {
-      if (what === "answers" && !State.hasAnswers()) { Nav.replace("diagnose.html"); return false; }
+      /* 순서가 바뀌었다. 생년월일 → 명식 → 질문 → 결과.
+         그래서 답변이 없을 때 되돌릴 곳은 여전히 질문 화면이지만,
+         생년월일이 없으면 질문보다 앞 단계인 birth 로 보내야 한다. */
+      if (what === "answers" && !State.hasAnswers()) {
+        Nav.replace(State.hasBirth() ? "diagnose.html" : "birth.html");
+        return false;
+      }
       if (what === "birth" && !State.hasBirth()) { Nav.replace("birth.html"); return false; }
       if (what === "paid" && !State.isPaid()) { Nav.replace("result.html"); return false; }
       return true;

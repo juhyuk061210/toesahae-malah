@@ -5,7 +5,6 @@
   "use strict";
   var T = App.Track, S = App.State;
 
-  if (!App.Nav.require("answers")) return;
   T("birth_input_start");
 
   var name = document.getElementById("name");
@@ -147,7 +146,7 @@
       aiConsent: agreeAI.checked,
       mktConsent: !!(agreeMkt && agreeMkt.checked)
     });
-    App.Nav.go("loading.html");
+    App.Nav.go("chart.html");
   });
 
   [y, m, d, name].forEach(function (el) {

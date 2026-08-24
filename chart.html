@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>내 사주 원국 | 퇴사해말아?</title>
+<meta name="robots" content="noindex" />
+
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
+<link rel="stylesheet" as="style" crossorigin
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&display=swap" />
+<link rel="stylesheet" href="theme.css" />
+<link rel="stylesheet" href="flow.css" />
+<link rel="stylesheet" href="chart.css" />
+</head>
+
+<body>
+<div class="shell">
+
+  <header class="top top--line">
+    <div class="top__in">
+      <button class="iconbtn" id="back" type="button" aria-label="이전">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <span class="top__title">사주 원국</span>
+      <span class="top__step">2 / 3</span>
+    </div>
+    <div class="prog"><div class="prog__bar" style="width:66%"></div></div>
+  </header>
+
+  <main class="flow">
+
+    <!-- ============ 명식 ============ -->
+    <section class="mz">
+      <p class="mz__lead" id="mzLead">절기 기준으로 세운 사주 원국입니다</p>
+      <h2 class="mz__title" id="mzTitle">—</h2>
+
+      <!-- 사주 8글자 -->
+      <div class="mz__grid" id="mzGrid" aria-label="사주 원국 여덟 글자"></div>
+
+      <p class="mz__note" id="mzNote"></p>
+    </section>
+
+    <!-- ============ 판정 요약 ============ -->
+    <section class="mz__cards" id="mzCards"></section>
+
+    <!-- ============ 오행 ============ -->
+    <section class="mz__sec">
+      <h3 class="mz__h">타고난 기운의 분포</h3>
+      <div class="oh" id="ohBars"></div>
+      <p class="mz__cap" id="ohCap"></p>
+    </section>
+
+    <!-- ============ 십성 ============ -->
+    <section class="mz__sec">
+      <h3 class="mz__h">무엇이 세고 무엇이 약한가</h3>
+      <div class="oh" id="ssBars"></div>
+      <p class="mz__cap" id="ssCap"></p>
+    </section>
+
+    <!-- ============ 대운 ============ -->
+    <section class="mz__sec">
+      <h3 class="mz__h">10년 단위로 바뀌는 큰 흐름</h3>
+      <div class="dw" id="dwRow"></div>
+      <p class="mz__cap" id="dwCap"></p>
+    </section>
+
+    <!-- ============ 통변 ============ -->
+    <section class="mz__sec">
+      <h3 class="mz__h">이 명식이 말하는 것</h3>
+      <div class="tb" id="tbList"></div>
+      <p class="mz__cap">여기까지는 생년월일만으로 나온 것입니다. 답변은 아직 반영되지 않았습니다.</p>
+    </section>
+
+    <!-- ============ 다음 단계 ============ -->
+    <section class="mz__next">
+      <h3 class="mz__nh">여기까지가 타고난 구조입니다</h3>
+      <p class="mz__np">
+        같은 명식이라도 지금 어떤 회사에서 무엇을 겪고 계신지에 따라
+        전혀 다르게 작동합니다. 질문 <b>10개</b>에 답해주시면
+        이 구조가 <b>지금</b> 어떻게 나타나고 있는지 겹쳐서 봅니다.
+      </p>
+      <a class="btn btn--pri mz__btn" href="diagnose.html" id="toQ">
+        지금 상황 10개만 더 <span class="btn__ar" aria-hidden="true">→</span>
+      </a>
+      <p class="mz__nn">답을 고르는 데 2분이면 됩니다 · 회원가입 없이 진행</p>
+    </section>
+
+  </main>
+
+  <footer class="foot" id="siteFoot"></footer>
+</div>
+
+<script src="config.js"></script>
+<script src="site.js"></script>
+<script src="solar-terms.js"></script>
+<script src="lunar-table.js"></script>
+<script src="saju.js"></script>
+<script src="saju-deep.js"></script>
+<script src="saju-analyze.js"></script>
+<script src="saju-read.js"></script>
+<script src="diagnosis.js"></script>
+<script src="questions.js"></script>
+<script src="bridge.js"></script>
+<script src="tension.js"></script>
+<script src="app.js"></script>
+<script src="chart.js"></script>
+</body>
+</html>

@@ -311,7 +311,7 @@
       App.Nav.go("report.html");
     } else {
       T("diagnosis_answers_complete");
-      App.Nav.go("birth.html");
+      App.Nav.go("loading.html");
     }
   }
 

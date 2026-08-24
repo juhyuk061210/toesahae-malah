@@ -512,8 +512,13 @@
         out.push(s);
       });
       if (tension.echo && !out.length) {
-        out.push(tension.echo.claim + ". " +
-                 (tension.echo.lines || []).join(" / ") + ". " + tension.echo.note);
+        /* 라벨은 "여기서 더 배울 게 없다" 처럼 종결형이라
+           그대로 이어붙이면 반말 나열이 된다. 인용 부호로 감싸 목록으로 만든다. */
+        var quoted = (tension.echo.lines || [])
+          .map(function (x) { return "'" + String(x).replace(/[.]$/, "") + "'"; })
+          .join(", ");
+        out.push(tension.echo.claim + ". 고르신 것을 그대로 옮기면 " + quoted +
+                 " 입니다. " + tension.echo.note);
       }
       return out;
     }
@@ -704,7 +709,7 @@
           "그건 아무도 안 세어준 항목입니다. 다음 자리를 고를 때 " +
           "그게 세어지는 곳인지를 기준 하나로 넣어두셔도 됩니다.",
 
-          A.endured + ". 지난 1년 잘 버틴 것으로 이걸 꼽으셨습니다. " +
+          "지난 1년 잘 버틴 것으로 고르신 건 " + eun(A.endured) + " 쪽이었습니다. " +
           "여기까지 온 힘이 어디서 나왔는지를 본인이 이미 알고 계신 셈입니다."
         ]));
       }

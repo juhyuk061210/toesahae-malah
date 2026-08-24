@@ -674,6 +674,14 @@
       return o;
     }
 
+    /* 한난(temp)과 조후 글자는 별격 분기보다 먼저 계산한다.
+       예전에는 별격으로 빠지는 경우 extra 를 안 넘겨서 temp 가 undefined 였고,
+       그걸 그대로 비교하면 전부 한쪽으로 떨어진다. */
+    var temp = 0;
+    SLOTS_GAN.concat(SLOTS_JI).forEach(function (s) { temp += D.TEMP[p[s]] || 0; });
+    var johuStr = D.JOHU[ilgan] && D.JOHU[ilgan][p.월지];
+    var johuOh = johuStr ? D.GAN_OH[johuStr[0]] : null;
+
     if (st.label === "극신강" || st.label === "극신약") {
       var dom = maxKey(G), ratio = G[dom] / total;
       if (ratio >= 0.6) {
@@ -682,15 +690,11 @@
         if (found) {
           log.push("별격 " + found + " (" + dom + " 비중 " + Math.round(ratio * 100) + "%)");
           return build(D.BYEOLGYEOK[found].용, D.BYEOLGYEOK[found].희,
-                       "별격", found, "MEDIUM", log);
+                       "별격", found, "MEDIUM", log,
+                       { temp: temp, johu: johuStr || null });
         }
       }
     }
-
-    var temp = 0;
-    SLOTS_GAN.concat(SLOTS_JI).forEach(function (s) { temp += D.TEMP[p[s]] || 0; });
-    var johuStr = D.JOHU[ilgan] && D.JOHU[ilgan][p.월지];
-    var johuOh = johuStr ? D.GAN_OH[johuStr[0]] : null;
 
     var weak = ["신약", "극신약", "중화신약"].indexOf(st.label) >= 0;
     var yongGroup;

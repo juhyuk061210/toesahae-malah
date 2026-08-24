@@ -676,8 +676,13 @@ async function buildNarrative(ctx) {
   if (!process.env.ANTHROPIC_API_KEY) return fallback("no_api_key");
   try {
     /* 10챕터를 한 번에 쓰면 2분이 걸린다. 세 덩어리로 나눠 동시에 돌리면
-       실측 68초. 첫 덩어리가 headline·closing 도 함께 쓴다. */
-    const parts = await Promise.all(
+       실측 68초. 첫 덩어리가 headline·closing 도 함께 쓴다.
+
+       예전에는 Promise.all 이라 세 덩어리 중 하나만 터져도 열 장 전부가
+       규칙 기반(3,418자)으로 떨어졌다. LLM 본문은 6,939자다.
+       돈을 낸 손님이 한 덩어리 실패 때문에 절반짜리를 받는 건 과하다.
+       그래서 성공한 덩어리는 살리고, 빠진 장만 규칙으로 메운다. */
+    const settled = await Promise.allSettled(
       Narrative.GROUPS.map((ids, i) =>
         callClaude(
           Narrative.groupPrompt(ctx, ids, i === 0),
@@ -685,9 +690,46 @@ async function buildNarrative(ctx) {
         )
       )
     );
+    const parts = settled.map((r) => (r.status === "fulfilled" ? r.value : null));
+    const failed = settled
+      .map((r, i) => (r.status === "rejected" ? i : -1))
+      .filter((i) => i >= 0);
+    if (failed.length) {
+      console.error("[narrative] 덩어리 실패:", failed.join(","),
+        settled.filter((r) => r.status === "rejected")
+               .map((r) => String(r.reason && r.reason.message).slice(0, 120)).join(" | "));
+    }
+
     const result = Narrative.mergeGroups(parts);
-    if (!result.chapters.length) throw new Error("빈 결과");
-    return { source: "llm", model: MODEL, result };
+    if (!result.chapters.length) throw new Error("전 덩어리 실패");
+
+    /* 빠진 장을 규칙 기반에서 가져와 자리에 끼운다.
+       두 문체가 섞이지만, 장이 통째로 비는 것보다는 낫다.
+       어느 장이 규칙 기반인지는 응답에 실어 로그로 남긴다. */
+    let patched = [];
+    if (result.chapters.length < Narrative.CHAPTERS.length) {
+      const have = {};
+      result.chapters.forEach((c) => { have[c.id] = c; });
+      const rule = Narrative.ruleChapters(
+        ctx.read, ctx.analyze, ctx.answersLabel, ctx.report, ctx.tension);
+      const ruleById = {};
+      (rule.chapters || []).forEach((c) => { ruleById[c.id] = c; });
+      result.chapters = Narrative.CHAPTERS
+        .map((c) => {
+          if (have[c.id]) return have[c.id];
+          if (ruleById[c.id]) { patched.push(c.id); return ruleById[c.id]; }
+          return null;
+        })
+        .filter(Boolean);
+      if (!result.headline) result.headline = rule.headline || "";
+      if (!result.closing) result.closing = rule.closing || "";
+    }
+
+    return {
+      source: patched.length ? "llm+rules" : "llm",
+      model: MODEL, result,
+      patched: patched.length ? patched : undefined
+    };
   } catch (e) {
     console.error("[narrative] LLM 실패, 규칙 기반으로 대체:", e.message);
     return fallback(String(e.message).slice(0, 200));

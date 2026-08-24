@@ -378,16 +378,64 @@
   /* =========================================================
      12개월 중 변화가 강해지는 구간 2곳 (§19)
      ========================================================= */
-  function monthScore(m) {
+  /* 예전에는 그 달의 십성 두 개만 봤다. 그러면 일간이 같은 사람은
+     열두 달 곡선이 통째로 같아지고, 나올 수 있는 곡선이 열 가지뿐이다.
+     실제로 여덟 명 중 다섯 명이 똑같이 "2026년 10월"을 받았다.
+     같은 회사 동료끼리 나란히 놓으면 그 자리에서 들통난다.
+
+     그래서 명식 전체를 넣는다 — 용신·기신 오행, 원국 지지와의 충·합,
+     그리고 지금 대운 지지와의 관계까지. */
+  function monthScore(m, deep, chart) {
     var v = 46;
-    v += sipDelta(m.sipsung) * 1.6;
-    v += sipDelta(m.branchSipsung) * 1.0;
+    /* 이 두 줄은 일간만 보므로 사람을 열 갈래로밖에 못 나눈다.
+       비중을 낮추고, 아래 명식 요소가 실제로 곡선을 정하게 한다. */
+    v += sipDelta(m.sipsung) * 1.0;
+    v += sipDelta(m.branchSipsung) * 0.6;
+
+    if (deep && deep.analyze && global.SajuDeep) {
+      var D = global.SajuDeep;
+      var y = deep.analyze.yongsin;
+      var ji = D.JI[m.ji];
+      var oh = ji ? D.JI_OH[ji] : null;
+
+      /* 용신 오행이 들어오는 달은 힘이 붙고, 기신이면 깎인다 */
+      if (oh && y) {
+        if (oh === y.용신오행) v += 15;
+        else if (oh === y.희신오행) v += 9;
+        else if (oh === y.기신오행) v -= 13;
+        else if (oh === y.구신오행) v -= 6;
+      }
+
+      /* 원국 지지와 충·합이 걸리는 달은 흔들림이 커진다.
+         충은 밖으로 벌어지고, 합은 안으로 묶인다. */
+      var P = deep.analyze.pillars;
+      if (ji && P) {
+        var natal = [P.년지, P.월지, P.일지, P.시지];
+        natal.forEach(function (nj) {
+          if (D.YUKCHUNG[nj] === ji) v += 9;
+          if (D.YUKHAP[nj] === ji) v -= 6;
+        });
+        /* 월지(직장 자리)와 부딪히는 달은 더 크게 본다 */
+        if (D.YUKCHUNG[P.월지] === ji) v += 7;
+      }
+
+      /* 지금 대운 지지와의 관계 — 같은 해라도 사람마다 다르다 */
+      var du = deep.analyze.unseong && deep.analyze.unseong.대운지;
+      if (ji && du && D.YUKCHUNG[du] === ji) v += 6;
+
+      /* 조후 — 그 달 기운이 이 사람에게 필요한 쪽인지.
+         같은 달이라도 필요한 글자가 사람마다 다르므로 여기서 크게 갈린다. */
+      if (oh && y && y.johu) {
+        var needOh = D.GAN_OH[String(y.johu)[0]];
+        if (needOh && oh === needOh) v += 10;
+      }
+    }
     return clamp(v, 12, 95);
   }
 
-  function findChangeWindows(monthly) {
+  function findChangeWindows(monthly, deep, chart) {
     var scored = monthly.map(function (m, i) {
-      return { i: i, score: monthScore(m), m: m };
+      return { i: i, score: monthScore(m, deep, chart), m: m };
     });
     var sorted = scored.slice().sort(function (a, b) { return b.score - a.score; });
 
@@ -628,7 +676,7 @@
 
     var type = decideType(scores, bd, a);
     var matrix = decideMatrix(scores);
-    var windows = findChangeWindows(monthly);
+    var windows = findChangeWindows(monthly, deep, chart);
     var style = workStyle(chart);
     var split = causeSplit(a, bd);
     var paths = pathFit(chart);
@@ -641,7 +689,7 @@
         year: m.year, month: m.month,
         label: m.year + "." + String(m.month).padStart(2, "0"),
         ganji: m.ganji, sipsung: m.sipsung,
-        score: monthScore(m)
+        score: monthScore(m, deep, chart)
       };
     });
 
@@ -680,11 +728,18 @@
         function distinctRank(tag) {
           if (tag.indexOf("격국_") === 0) return 0;      // 10종 × 성격/파격
           if (tag === "퇴사트리거") return 1;
-          if (["조직소속형", "비소속형", "관성불안정"].indexOf(tag) >= 0) return 2;
+          /* 관성 판정이 8갈래로 늘어났다. 여기를 같이 안 고치면
+             새 태그가 순위 밖으로 밀려 무료 화면 근거 3개에서 사라진다. */
+          if (["조직소속형", "비소속형", "관성불안정", "조직잠재형",
+               "관성합거", "관성공망", "관성손상", "관성미약",
+               "월령소속형"].indexOf(tag) >= 0) return 2;
           if (["상관견관", "상관견관_재성중재", "식상왕", "비겁왕",
                "재다신약", "관성과다"].indexOf(tag) >= 0) return 3;
           if (tag.indexOf("신살_") === 0) return 4;
-          if (["충", "형", "국", "합", "합충구도"].indexOf(tag) >= 0) return 5;
+          /* 충 태그가 궁위별로 갈라졌다(충_직장 등). 접두어로 받는다.
+             안 고치면 새 태그가 순위 밖으로 밀려 무료 화면에서 사라진다. */
+          if (tag.indexOf("충") === 0 ||
+              ["형", "국", "합", "합충구도"].indexOf(tag) >= 0) return 5;
           if (tag.indexOf("국면_") === 0) return 6;
           if (["유리환경", "불리환경"].indexOf(tag) >= 0) return 7;
           return 9;                                       // 신강·신약·중화

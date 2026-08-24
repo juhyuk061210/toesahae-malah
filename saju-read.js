@@ -33,6 +33,15 @@
 
   function ev(parts) { return parts.filter(Boolean).join(" + "); }
 
+  /* 받침 유무로 조사를 고른다. "계·경이(가)" 같은 표기가 남으면
+     그 한 곳 때문에 나머지 문장까지 기계가 쓴 것처럼 읽힌다. */
+  function josa(w, withB, without) {
+    var c = String(w).charCodeAt(String(w).length - 1);
+    if (c < 0xac00 || c > 0xd7a3) return withB;
+    return ((c - 0xac00) % 28) ? withB : without;
+  }
+  function iga(w) { return w + josa(w, "이", "가"); }
+
   /* 같은 뜻을 여러 벌 써두고 명식마다 다른 것을 고른다.
      고정 문구를 그대로 두면 모든 리포트에 100% 등장한다.
      같은 명식이면 언제나 같은 문장이 나온다(재현성). */
@@ -56,6 +65,14 @@
      조사에서 가장 강한 규칙이었다. 관성이 살아 있으면
      소속이 정체성을 지탱하고, 없으면 소속이 숨막힘이 된다.
      ========================================================= */
+  /* 관성 = 조직·직함·평가체계와의 관계. 퇴사 앱에서 가장 중요한 축이다.
+
+     예전에는 세 갈래(건재/부재/무근+손상)뿐이라 세 명 중 두 명이
+     같은 문장을 읽었다. 원인이 두 개였다.
+       (1) 지장간 여기·중기까지 전부 통근으로 세서 대부분이 "뿌리 있음" 이 됐다.
+       (2) 올해 세운까지 섞어서 판정했다. 평생 구조를 보면서 올해를 섞으면
+           같은 해에 태어나지도 않은 사람들이 같은 결론으로 몰린다.
+     그래서 지장간은 층별로 무게를 다르게 주고, 관계는 원국만 본다. */
   function readGwanseong(a) {
     var p = a.pillars, il = a.ilgan, out = [];
     var tugan = [p.년간, p.월간, p.시간];
@@ -65,72 +82,139 @@
     });
     var gwanOh = D.groupToOh(il, "관성");
 
-    /* 통근 — 지지 지장간에 관성 오행이 있는가 */
-    var rooted = [], slots = ["년지", "월지", "일지", "시지"];
-    slots.forEach(function (s) {
-      D.JIJANGGAN[p[s]].forEach(function (seg) {
-        if (D.GAN_OH[seg.g] === gwanOh) rooted.push({ slot: s, ji: p[s], gan: seg.g, layer: seg.layer });
+    /* 통근 — 지장간 층과 자리에 따라 무게가 다르다.
+       정기(본기)에 앉은 것과 여기에 살짝 걸친 것은 같지 않다.
+       월지는 사령 자리라 가장 무겁고, 시지는 가장 가볍다. */
+    var LAYER_R = { 정기: 1.0, 중기: 0.5, 여기: 0.3 };
+    var SLOT_R  = { 월지: 1.5, 일지: 1.2, 년지: 1.0, 시지: 0.8 };
+    var rooted = [], rootW = 0, slots = ["년지", "월지", "일지", "시지"];
+    slots.forEach(function (sl) {
+      D.JIJANGGAN[p[sl]].forEach(function (seg) {
+        if (D.GAN_OH[seg.g] !== gwanOh) return;
+        var w = (LAYER_R[seg.layer] || 0.3) * (SLOT_R[sl] || 1);
+        rooted.push({ slot: sl, ji: p[sl], gan: seg.g, layer: seg.layer, w: w });
+        rootW += w;
       });
     });
+    rooted.sort(function (x, y) { return y.w - x.w; });
 
-    /* 손상 — 합거·공망·형충 */
-    var hapgeo = gwanGan.some(function (g) { return tugan.indexOf(D.GAN_HAP[g]) >= 0; });
-    var voided = rooted.some(function (r) { return a.sinsal.gongmangDay.indexOf(r.ji) >= 0; });
-    var damaged = (a.relations.list || []).some(function (r) {
-      return ["육충", "삼형", "상형"].indexOf(r.type) >= 0 &&
-             r.slots.some(function (s) {
-               return rooted.some(function (x) { return x.slot === s; });
-             });
+    /* 손상 판정 — 원국 안에서만 본다. 대운·세운은 시기 이야기지 구조가 아니다. */
+    var hapGan = gwanGan.filter(function (g) { return tugan.indexOf(D.GAN_HAP[g]) >= 0; });
+    var voidRoot = rooted.filter(function (r) { return a.sinsal.gongmangDay.indexOf(r.ji) >= 0; });
+    var natal = (a.natalRelations && a.natalRelations.list) || [];
+    var hitRoot = [];
+    natal.forEach(function (r) {
+      if (["육충", "삼형", "상형"].indexOf(r.type) < 0) return;
+      r.slots.forEach(function (sl) {
+        rooted.forEach(function (x) { if (x.slot === sl && hitRoot.indexOf(x) < 0) hitRoot.push(x); });
+      });
     });
 
     var score = a.score.group["관성"];
     var total = 0; for (var k in a.score.group) total += a.score.group[k];
     var ratio = total ? score / total : 0;
 
+    /* 손상은 "관성을 지탱하던 뿌리 중 얼마나"로 본다.
+       뿌리가 다섯인데 하나 깨진 것과 하나뿐인데 그게 깨진 것은 다르다. */
+    var voidW = 0, hitW = 0;
+    voidRoot.forEach(function (r) { voidW += r.w; });
+    hitRoot.forEach(function (r) { hitW += r.w; });
+    var voidShare = rootW ? voidW / rootW : 0;
+    var hitShare  = rootW ? hitW / rootW : 0;
+
+    /* 순서가 중요하다. 손상 검사를 뒤로 미루면 "뿌리는 있는데 안 드러남"
+       한 갈래에 절반이 몰린다. 뿌리가 깨졌는지를 먼저 보고,
+       그다음에 천간에 드러났는지를 본다.
+       뿌리가 월지(직장·사회 자리)에 있는지도 갈라 준다 —
+       퇴사 앱에서 월지에 걸린 사람과 시지에 걸린 사람은 다른 이야기다. */
+    var wolRoot = rooted.some(function (r) { return r.slot === "월지" && r.w >= 0.9; });
+
     var state;
-    if (gwanGan.length && rooted.length && !hapgeo && !voided && !damaged) state = "건재";
-    else if (!gwanGan.length && !rooted.length)                            state = "부재";
-    else if (gwanGan.length && !rooted.length)                             state = "무근";
-    else if (hapgeo || voided || damaged)                                  state = "손상";
-    else                                                                    state = "잠복";
+    if (rootW < 0.4 && !gwanGan.length)            state = "부재";
+    else if (rootW < 0.4)                          state = "무근";
+    else if (voidShare >= 0.5)                     state = "공망";
+    else if (hitShare >= 0.5)                      state = "충형손상";
+    else if (gwanGan.length && hapGan.length === gwanGan.length) state = "합거";
+    else if (!gwanGan.length && wolRoot)           state = "월령소속";
+    else if (!gwanGan.length)                      state = "유근무투";
+    else if (rootW < 1.0 || ratio < 0.12)          state = "약함";
+    else                                           state = "건재";
 
-    var evidence = ev([
+    var evParts = [
       gwanGan.length ? "천간 관성 " + gwanGan.join("·") : "천간에 관성 없음",
-      rooted.length ? rooted[0].slot + " " + rooted[0].ji + "에 통근" : "지지 무근",
-      hapgeo ? "합거" : null, voided ? "공망" : null, damaged ? "형충 손상" : null
-    ]);
+      rooted.length ? rooted[0].slot + " " + rooted[0].ji + " " + rooted[0].layer + "에 통근"
+                    : "지지에 뿌리 없음",
+      rootW ? "뿌리 무게 " + rootW.toFixed(1) : null,
+      hapGan.length ? "합거 " + hapGan.join("·") : null,
+      voidShare >= 0.5 ? "뿌리 공망" : null,
+      hitShare >= 0.5 ? "뿌리 충형" : null
+    ];
+    var evidence = ev(evParts);
 
-    if (state === "건재") {
+    /* 여덟 갈래에 각각 다른 이야기를 붙인다.
+       "A가 아니라 B" 구문과 "~구조입니다" 종결이 몰리지 않게 흩어 쓴다. */
+    var SAY = {
+      건재: { tag: "조직소속형", ch: [CH.ENV, CH.PATH, CH.NEXT],
+        claim: "직함과 소속이 자기 자리를 지탱하는 편",
+        detail: "그만둘 때 수입 걱정보다 '내가 누구인지 모르겠다'가 먼저 옵니다. " +
+                "혼자 일하게 되더라도 법인이든 자격증이든 계약서든, 형식이 하나 있어야 안정되십니다." },
+
+      월령소속: { tag: "월령소속형", ch: [CH.ENV, CH.PATH, CH.WHY],
+        claim: "직장이라는 판 자체가 삶의 중심에 놓여 있는 배치",
+        detail: "일을 좋아하느냐와는 별개로, 회사가 하루의 축이 되어 있습니다. " +
+                "그래서 그만두는 상상을 하면 시간표부터 무너집니다. " +
+                "옮기실 때 연봉보다 하루가 어떻게 짜이는지를 먼저 보시는 편이 낫습니다." },
+
+      유근무투: { tag: "조직잠재형", ch: [CH.ENV, CH.WHY, CH.PATH],
+        claim: "조직에서 버틸 힘은 있는데 겉으로 드러나지 않는 배치",
+        detail: "안에서는 자리를 지키시는데 밖에서 보이는 직함이나 평가로는 잘 안 잡힙니다. " +
+                "그래서 인정이 늦게 옵니다. 티가 나는 자리로 옮기면 체감이 크게 달라집니다." },
+
+      무근: { tag: "관성불안정", ch: [CH.WHY, CH.HARD, CH.REPEAT],
+        claim: "소속을 원하면서도 그 소속이 오래 버텨주지 않는 배치",
+        detail: "조직을 붙잡고 싶은 마음과, 그 조직이 받쳐주지 못하는 현실이 겹칩니다. " +
+                "이 어긋남 때문에 퇴사 고민이 반복됩니다." },
+
+      합거: { tag: "관성합거", ch: [CH.WHY, CH.HARD, CH.NEXT],
+        claim: "직함이 붙어 있어도 실권은 다른 데 가 있는 자리",
+        detail: "책임은 오는데 결정권은 옆으로 새는 배치입니다. " +
+                "일한 만큼 이름이 남지 않는 느낌이 반복되면 원인이 여기일 수 있습니다." },
+
+      공망: { tag: "관성공망", ch: [CH.WHY, CH.REPEAT, CH.PATH],
+        claim: "자리를 얻어도 며칠이면 허전해지는 자리",
+        detail: "직위나 인정을 못 받는다는 뜻이 아닙니다. 받아도 오래 채워지지 않습니다. " +
+                "승진해도 금방 다시 비는 감각이 있다면 여기서 옵니다." },
+
+      충형손상: { tag: "관성손상", ch: [CH.HARD, CH.REPEAT, CH.WHY],
+        claim: "자리가 자주 흔들리는 배치",
+        detail: "조직이 바뀌거나, 위가 바뀌거나, 평가 기준이 바뀌는 일을 남들보다 자주 겪으십니다. " +
+                "본인 탓으로 돌리기 쉬운데 구도상 그렇게 걸려 있습니다." },
+
+      약함: { tag: "관성미약", ch: [CH.ENV, CH.PATH, CH.NEXT],
+        claim: "규칙보다 재량이 있어야 힘이 나는 편",
+        detail: "위계가 촘촘한 곳에서 유난히 빨리 지치십니다. " +
+                "같은 일이라도 맡겨주는 쪽에서 성과가 훨씬 잘 나옵니다." },
+
+      부재: { tag: "비소속형", ch: [CH.ENV, CH.PATH, CH.WHY],
+        claim: "위계 자체가 몸으로 답답하게 느껴지는 편",
+        detail: "직장을 못 다닌다는 말이 아닙니다. 직장이 정체성이 되지 않는다는 뜻입니다. " +
+                "소속보다 실력이나 결과물로 사회와 연결되십니다." }
+    };
+
+    var say = SAY[state];
+    if (say) {
       out.push({
-        tag: "조직소속형", strength: "핵심",
-        claim: "직함·소속·평가체계가 정체성을 지탱하는 구조",
-        detail: "퇴사할 때 수입 걱정보다 '내가 누구인지 모르겠다'가 먼저 옵니다. " +
-                "독립하더라도 법인·자격증·계약 같은 형식이 있어야 안정됩니다.",
-        evidence: evidence, chapters: [CH.ENV, CH.PATH, CH.NEXT]
-      });
-    } else if (state === "부재") {
-      out.push({
-        tag: "비소속형", strength: "핵심",
-        claim: "규율·위계 자체가 물리적으로 답답하게 느껴지는 구조",
-        detail: "직장을 못 다닌다는 뜻이 아니라, 직장이 정체성이 되지 않는다는 뜻입니다. " +
-                "소속이 아니라 실력·결과물·자격으로 사회와 연결됩니다.",
-        evidence: evidence, chapters: [CH.ENV, CH.PATH, CH.WHY]
-      });
-    } else if (state === "무근" || state === "손상") {
-      out.push({
-        tag: "관성불안정", strength: "핵심",
-        claim: "소속을 원하면서도 그 소속이 오래 버텨주지 않는 구조",
-        detail: "조직을 붙잡고 싶은 마음과, 그 조직이 나를 지탱해주지 못하는 현실이 겹칩니다. " +
-                "이 어긋남이 퇴사 고민을 반복시킵니다.",
-        evidence: evidence, chapters: [CH.WHY, CH.HARD, CH.REPEAT]
+        tag: say.tag, strength: "핵심",
+        claim: say.claim, detail: say.detail,
+        evidence: evidence, chapters: say.ch
       });
     }
 
     if (ratio >= 0.4) {
       out.push({
         tag: "관성과다", strength: "핵심",
-        claim: "감당해야 할 책임·기대가 본인 그릇보다 크게 걸려 있는 상태",
-        detail: "일이 많아서가 아니라, 거절하면 관계가 깨진다는 감각이 기본값으로 작동합니다.",
+        claim: "감당할 책임과 기대가 본인 그릇보다 크게 걸려 있는 상태",
+        detail: "일이 많아서가 아니라, 거절하면 관계가 깨진다는 감각이 기본값으로 돌아갑니다.",
         evidence: "관성 세력 " + Math.round(ratio * 100) + "% (5군 중 최대)",
         chapters: [CH.HARD, CH.WHY]
       });
@@ -414,20 +498,52 @@
   /* =========================================================
      형충회합 — 움직임과 붙잡힘
      ========================================================= */
+  /* 궁위(宮位) — 어느 기둥이 흔들렸는지에 따라 이야기가 완전히 달라진다.
+     년=배경·집안 / 월=직장·사회 / 일=본인·가정 / 시=말년·자식.
+     퇴사 앱에서 월지가 흔들린 사람과 일지가 흔들린 사람은 다른 얘기다.
+     예전에는 월지만 한 줄 다르고 나머지는 뭉뚱그렸다.
+     걸리지 않은 자리에 "직장 자리" 라고 붙이면 없는 근거를 만드는 것이라
+     기본값 폴백은 두지 않는다. */
+  var GUNG = {
+    년지: { name: "배경",   say: "집안이나 출신 배경 쪽" },
+    월지: { name: "직장",   say: "직장과 사회생활 쪽" },
+    일지: { name: "본인",   say: "본인과 가장 가까운 관계 쪽" },
+    시지: { name: "말년",   say: "앞으로의 자리와 방향 쪽" }
+  };
+  function gungOf(slots) {
+    var order = ["월지", "일지", "년지", "시지"];   // 직장 앱이므로 월지 우선
+    for (var i = 0; i < order.length; i++) {
+      if (slots.indexOf(order[i]) >= 0) return GUNG[order[i]];
+    }
+    return null;
+  }
+
   function readRelations(a) {
     var out = [], rel = a.relations;
     var top = (rel.list || []).slice(0, 3);
 
     top.forEach(function (r) {
       var pos = r.slots.join("·");
+      var gg = gungOf(r.slots);
       if (r.type === "육충") {
+        var CHUNG_SAY = {
+          월지: "직장 자리가 주기적으로 흔들리는 배치입니다. 조직이 바뀌거나 위가 바뀌거나 " +
+                "평가 기준이 바뀌는 일을 남들보다 자주 겪으십니다. 본인이 못 버텨서가 아닙니다.",
+          일지: "가장 가까운 자리가 흔들리는 배치입니다. 회사 일이 집으로, 집 일이 회사로 " +
+                "잘 넘어옵니다. 그래서 한쪽이 흔들리면 양쪽이 같이 흔들립니다.",
+          년지: "출발선 쪽이 흔들려 있는 배치입니다. 기댈 배경이 얇았던 만큼 " +
+                "스스로 만들어온 몫이 큽니다. 그래서 놓기가 더 어렵습니다.",
+          시지: "앞으로의 자리 쪽이 흔들리는 배치입니다. 지금보다 몇 년 뒤 그림이 " +
+                "잘 안 그려지는 감각이 여기서 옵니다."
+        };
         out.push({
-          tag: "충", strength: "핵심",
-          claim: r.slots.indexOf("월지") >= 0
-            ? "직장·사회 자리가 흔들리는 구조"
-            : "일상의 기반이 주기적으로 흔들리는 구조",
-          detail: "충은 깨지는 게 아니라 열리는 쪽이기도 합니다. " +
-                  "붙잡으면 손해가 크고, 정리하면 오히려 풀립니다.",
+          tag: gg ? "충_" + gg.name : "충", strength: "핵심",
+          claim: gg ? gg.say + "이 흔들리는 배치" : "기반이 주기적으로 흔들리는 배치",
+          detail: (gg && CHUNG_SAY[r.slots.indexOf("월지") >= 0 ? "월지" :
+                                   r.slots.indexOf("일지") >= 0 ? "일지" :
+                                   r.slots.indexOf("년지") >= 0 ? "년지" : "시지"]
+                   || "붙잡으면 손해가 크고, 정리하면 오히려 풀립니다.") +
+                  " 충은 깨지는 게 아니라 열리는 쪽이기도 합니다.",
           evidence: r.ji.join("") + " 충 (" + pos + ")" + (r.complete ? " — 운에서 완성" : ""),
           chapters: [CH.WINDOW, CH.WHY]
         });
@@ -496,6 +612,30 @@
             detail:"큰 폭으로 성과를 내지만 소모도 큽니다. 페이스 관리가 실력만큼 중요합니다." },
     공망: { claim:"채워도 채워지지 않는 감각이 있는 자리",
             detail:"그 영역에서 노력 대비 체감이 약합니다. 기대치를 낮추면 오히려 편해집니다." },
+    /* 공망은 43%에게 걸린다. 한 문장으로 끝내면 절반 가까운 사람이 같은 글을 읽는다.
+       공망이 앉은 자리의 지장간 정기를 십성으로 환원해서 갈라 준다.
+       통설도 "그 영역이 없다"가 아니라 "계속 좇는데 아쉬움이 남는다" 쪽이다. */
+    _공망군: {
+      관성: { claim:"자리와 인정을 좇는데 손에 남는 느낌이 옅은 배치",
+              detail:"승진해도, 인정받아도 며칠이면 다시 허전해지십니다. " +
+                     "못 받아서가 아니라 받아도 오래 안 채워집니다. " +
+                     "직함으로 채우려 하실수록 갈증이 길어집니다." },
+      인성: { claim:"배워도 배운 것 같지 않은 감각이 남는 배치",
+              detail:"자격증을 따도, 공부를 해도 '아직 부족하다'가 먼저 옵니다. " +
+                     "실력이 없어서가 아닙니다. 기준선이 계속 위로 움직입니다. " +
+                     "남과 견주기보다 작년의 본인과 견주시는 편이 낫습니다." },
+      재성: { claim:"벌어도 모이는 감각이 옅은 배치",
+              detail:"수입이 늘어도 안정감이 그만큼 안 따라옵니다. " +
+                     "쓰는 게 헤퍼서가 아니라, 숫자가 마음을 잘 안 눌러줍니다. " +
+                     "연봉만 보고 옮기시면 몇 달 뒤 같은 자리로 돌아옵니다." },
+      비겁: { claim:"사람 사이에 있어도 혼자인 감각이 남는 배치",
+              detail:"동료와 잘 지내면서도 어딘가 한 겹 떨어져 계십니다. " +
+                     "관계가 나쁘다는 뜻이 아니라, 채워지는 몫이 작다는 뜻입니다. " +
+                     "팀 분위기로 버티는 자리는 오래 못 가십니다." },
+      식상: { claim:"내놓아도 남는 게 적은 감각이 있는 배치",
+              detail:"만들고 표현하는 데 힘을 쓰시는데 결과물이 손에 안 남습니다. " +
+                     "기록으로 남는 형태의 일을 고르시면 이 감각이 꽤 줄어듭니다." }
+    },
     천을귀인: { claim:"결정적일 때 사람이 도와주는 자리",
                 detail:"혼자 해결하려 들기보다 물어보는 쪽이 유리합니다." },
     문창귀인: { claim:"글·자료·설명으로 인정받는 성향", detail:"말보다 정리된 문서에서 강점이 나옵니다." },
@@ -510,6 +650,14 @@
     var out = [];
     (a.sinsal.top || []).forEach(function (s) {
       var r = SIN_READ[s.name];
+      /* 공망은 걸린 자리의 정기를 십성으로 환원해 갈라 읽는다.
+         자리를 모르거나 환원이 안 되면 원래 문장으로 돌아간다. */
+      if (s.name === "공망" && s.ji && D.JIJANGGAN[s.ji]) {
+        var segs = D.JIJANGGAN[s.ji];
+        var jeong = segs[segs.length - 1];
+        var grp = jeong ? D.SS_GROUP[D.sipsung(a.ilgan, jeong.g)] : null;
+        if (grp && SIN_READ._공망군[grp]) r = SIN_READ._공망군[grp];
+      }
       if (!r) return;
       out.push({
         tag: "신살_" + s.name, strength: "보조",
@@ -579,6 +727,206 @@
   /* =========================================================
      통합
      ========================================================= */
+  /* =========================================================
+     조후 — 궁통보감이 그 일간·그 달에 필요하다고 지목한 글자
+     =========================================================
+     120칸짜리 표를 만들어두고 서술에는 한 줄도 안 쓰고 있었다.
+     명식마다 고르게 퍼지는 몇 안 되는 축이라 아깝다.
+
+     단, "한랭/서늘/중화/온난/조열" 5단계로 나누는 방식은 쓰지 않는다.
+     서늘 33% + 중화 28% = 61%가 아무한테나 맞는 말이 되기 때문이다.
+     대신 지목된 글자가 실제 명식에 있느냐 없느냐만 본다.
+     이건 명식을 펼쳐놓고 세면 누구나 확인할 수 있는 사실이다. */
+  function readJohu(a) {
+    var y = a.yongsin, p = a.pillars, out = [];
+    if (!y || !y.johu) return out;
+
+    var need = String(y.johu).split("");           // 필요한 글자들
+    var haveGan = [p.년간, p.월간, p.일간, p.시간];
+    var haveJi  = [p.년지, p.월지, p.일지, p.시지];
+
+    var got = [], missing = [];
+    need.forEach(function (g) {
+      var inGan = haveGan.indexOf(g) >= 0;
+      var inJi = haveJi.some(function (j) {
+        return D.JIJANGGAN[j].some(function (seg) { return seg.g === g; });
+      });
+      if (inGan) got.push({ g: g, where: "천간" });
+      else if (inJi) got.push({ g: g, where: "지장간" });
+      else missing.push(g);
+    });
+
+    var topGan = need[0];                          // 표에서 첫 글자가 가장 중요하다
+    var topGot = got.some(function (x) { return x.g === topGan; });
+    var topInGan = got.some(function (x) { return x.g === topGan && x.where === "천간"; });
+
+    var oh = D.GAN_OH[topGan];
+    var ENV = {
+      목: "새로 벌이고 키우는 일", 화: "드러나고 알려지는 일",
+      토: "쌓고 관리하는 일",     금: "정리하고 끊는 일",
+      수: "궁리하고 흐름을 읽는 일"
+    };
+    var work = ENV[oh] || "본인에게 맞는 일";
+
+    var evd = ev([
+      "일간 " + p.일간 + " · 월지 " + p.월지 + " 조후 " + y.johu,
+      topGot ? (topInGan ? "천간에 " + topGan + " 있음" : "지장간에 " + topGan + " 있음")
+             : topGan + " 없음",
+      typeof y.temp === "number" ? "한난 " + y.temp : null
+    ]);
+
+    if (topInGan) {
+      out.push({
+        tag: "조후_충족", strength: "보조",
+        claim: "계절이 요구하는 것을 이미 갖고 태어난 배치",
+        detail: "이 계절에 태어난 " + p.일간 + " 일간에게 필요한 건 " + topGan + "입니다. " +
+                "그게 천간에 나와 있습니다. " + work + "에서 힘이 덜 들고 회복도 빠르십니다. " +
+                "지금 지치신다면 타고난 조건보다 지금 환경 쪽을 먼저 보셔야 합니다.",
+        evidence: evd, chapters: [CH.ENV, CH.PATH]
+      });
+    } else if (topGot) {
+      out.push({
+        tag: "조후_잠복", strength: "보조",
+        claim: "필요한 것이 안에는 있는데 밖으로는 잘 안 나오는 배치",
+        detail: "이 계절의 " + p.일간 + " 일간에게 필요한 " + topGan + "이 지장간에 숨어 있습니다. " +
+                "쓸 수는 있는데 저절로 나오지는 않습니다. " +
+                work + " 쪽에서 판을 깔아주는 사람이나 계기가 있을 때 확 살아나십니다.",
+        evidence: evd, chapters: [CH.ENV, CH.PATH, CH.NEXT]
+      });
+    } else {
+      out.push({
+        tag: "조후_결핍", strength: "핵심",
+        claim: "계절이 요구하는 것이 명식에 없는 배치",
+        detail: "이 계절의 " + p.일간 + " 일간에게는 " + topGan + "이 필요한데 명식에 없습니다. " +
+                "그래서 " + work + "을 밖에서 끌어와야 합니다. 사람이든 환경이든 " +
+                "그게 채워지는 자리에서는 눈에 띄게 편해지시고, 없으면 유난히 오래 헤매십니다. " +
+                "직장을 고르실 때 조건표보다 이게 있는 자리인지를 먼저 보십시오.",
+        evidence: evd, chapters: [CH.ENV, CH.WHY, CH.PATH]
+      });
+    }
+
+    /* 두 글자 이상 빠졌으면 그것만 한 줄 더 */
+    if (missing.length >= 2) {
+      out.push({
+        tag: "조후_다결", strength: "보조",
+        claim: "여러 조건이 한꺼번에 비어 있는 배치",
+        detail: "이 계절에 필요한 글자 중 " + iga(missing.join("·")) + " 함께 비어 있습니다. " +
+                "하나만 채워서는 체감이 잘 안 바뀌는 구성이라, " +
+                "환경을 고르실 때 한 가지 조건만 보고 결정하지 않으시는 편이 낫습니다.",
+        evidence: "조후 " + y.johu + " 중 " + missing.join("·") + " 없음",
+        chapters: [CH.PATH, CH.NEXT]
+      });
+    }
+    return out;
+  }
+
+  /* =========================================================
+     유통(流通) — 힘이 어디로 흘러가는가
+     =========================================================
+     이 앱의 핵심 질문("회사가 문제인가 일이 문제인가")에 가장 직접
+     답하는 판정인데 코드에 아예 없었다.
+
+     관인상생: 조직 → 인정 → 나  (조직 안에서 자라는 구조)
+     식상생재: 만듦 → 돈          (만든 걸 값으로 바꾸는 구조)
+     상관패인: 튀는 힘을 배움이 눌러줌
+     식신제살: 압박을 일로 받아냄
+     재생관:   돈이 자리를 만들어줌
+     유통단절: 한 군데 고여 있음
+
+     문턱은 실측 분포를 보고 잡는다. 너무 높으면 3분의 1이 아무 문장도
+     못 받고, 너무 낮으면 전원에게 붙어 의미가 없어진다. */
+  function readFlow(a) {
+    var G = a.score.group, out = [];
+    var total = 0, k;
+    for (k in G) total += G[k];
+    if (!total) return out;
+
+    function r(x) { return (G[x] || 0) / total; }
+    var 비 = r("비겁"), 식 = r("식상"), 재 = r("재성"), 관 = r("관성"), 인 = r("인성");
+
+    /* 두 축이 함께 살아 있어야 "흐른다"고 말할 수 있다 */
+    var LIVE = 0.13;
+    var cands = [];
+    if (관 >= LIVE && 인 >= LIVE) cands.push({ k: "관인상생", v: Math.min(관, 인) });
+    if (식 >= LIVE && 재 >= LIVE) cands.push({ k: "식상생재", v: Math.min(식, 재) });
+    if (재 >= LIVE && 관 >= LIVE) cands.push({ k: "재생관",   v: Math.min(재, 관) });
+    if (식 >= LIVE && 인 >= LIVE) cands.push({ k: "상관패인", v: Math.min(식, 인) });
+    if (식 >= LIVE && 관 >= LIVE) cands.push({ k: "식신제살", v: Math.min(식, 관) });
+
+    var SAY = {
+      관인상생: {
+        claim: "조직 안에서 인정을 받아 자라는 흐름",
+        detail: "맡은 일이 평가로 이어지고 그 평가가 다시 힘이 되는 구조입니다. " +
+                "이 흐름이 도는 조직에서는 오래 다니시고 성과도 쌓입니다. " +
+                "반대로 평가가 납득이 안 되기 시작하면 다른 조건이 좋아도 빠르게 식으십니다.",
+        ch: [CH.ENV, CH.PATH, CH.NEXT] },
+      식상생재: {
+        claim: "만든 것이 값으로 바뀌는 흐름",
+        detail: "결과물이 눈에 보이고 그게 숫자로 돌아오는 자리에서 힘이 나십니다. " +
+                "월급처럼 성과와 보상이 멀리 떨어져 있으면 동기가 잘 안 붙습니다. " +
+                "성과급·수주·개인 작업물이 있는 쪽을 보시면 체감이 다릅니다.",
+        ch: [CH.PATH, CH.NEXT, CH.ENV] },
+      재생관: {
+        claim: "성과가 자리를 만들어주는 흐름",
+        detail: "숫자로 증명하면 직함이 따라오는 구조입니다. " +
+                "말이나 관계로 올라가는 조직에서는 유난히 답답하시고, " +
+                "실적이 그대로 보이는 곳에서 제일 빨리 자리를 잡으십니다.",
+        ch: [CH.ENV, CH.PATH] },
+      상관패인: {
+        claim: "튀어나가려는 힘을 배움이 눌러주는 흐름",
+        detail: "하고 싶은 말과 참아야 하는 말 사이에서 자주 서 계십니다. " +
+                "공부나 자격이 붙어 있을 때는 그 힘이 실력으로 나가고, " +
+                "그게 없으면 마찰로 나갑니다. 배우는 걸 멈추지 않는 편이 안전합니다.",
+        ch: [CH.WHY, CH.REPEAT, CH.PATH] },
+      식신제살: {
+        claim: "압박을 일로 받아내는 흐름",
+        detail: "스트레스를 감정으로 풀지 않고 결과물로 바꾸시는 편입니다. " +
+                "그래서 힘든 시기에 오히려 성과가 나옵니다. " +
+                "다만 몸이 먼저 신호를 보내기 쉬우니 총량 관리가 필요합니다.",
+        ch: [CH.HARD, CH.PATH] }
+    };
+
+    if (cands.length) {
+      cands.sort(function (x, y) { return y.v - x.v; });
+      var win = cands[0], sy = SAY[win.k];
+      out.push({
+        tag: "유통_" + win.k, strength: "핵심",
+        claim: sy.claim, detail: sy.detail,
+        /* 내부 문턱값(13%)을 화면에 찍으면 안 된다.
+           손님에게는 개인 측정치처럼 보이는데 실제로는 모두에게 같은 상수다. */
+        evidence: ev([win.k, "두 축이 모두 살아 있음"]),
+        chapters: sy.ch
+      });
+      return out;
+    }
+
+    /* 어느 쌍도 안 이어지면 한 군데 고여 있다는 뜻이다.
+       어디가 고였는지까지 말해줘야 쓸모가 있다. */
+    var mx = "비겁", mv = 비;
+    var pairs = [["식상", 식], ["재성", 재], ["관성", 관], ["인성", 인]];
+    pairs.forEach(function (x) { if (x[1] > mv) { mx = x[0]; mv = x[1]; } });
+    var STUCK = {
+      비겁: "힘은 있는데 그걸 내보낼 통로가 좁습니다. 혼자 버티는 데 다 쓰이는 배치라, " +
+            "같이 할 사람이나 내놓을 자리가 생기면 확 달라지십니다.",
+      식상: "만들고 표현하는 힘은 큰데 그게 값이나 자리로 이어지는 길이 약합니다. " +
+            "재능이 아니라 연결의 문제라, 결과물이 남는 형태로 일하시면 크게 나아집니다.",
+      재성: "실적과 숫자 쪽에 힘이 몰려 있는데 그걸 받아줄 자리가 얇습니다. " +
+            "잘해도 자리로 잘 안 바뀌는 답답함이 여기서 옵니다.",
+      관성: "책임과 기대는 크게 걸려 있는데 그걸 받쳐줄 힘이 얇습니다. " +
+            "그래서 같은 일을 해도 더 많이 소모되십니다.",
+      인성: "배우고 받아들이는 쪽에 힘이 몰려 있는데 밖으로 내는 통로가 좁습니다. " +
+            "준비만 길어지기 쉬운 배치라, 완성 전에 한 번 꺼내보시는 편이 낫습니다."
+    };
+    out.push({
+      tag: "유통_단절", strength: "핵심",
+      claim: mx + " 쪽에 힘이 고여 흐르지 않는 배치",
+      detail: STUCK[mx],
+      evidence: ev(["유통 단절", mx + " 쪽으로 치우침"]),
+      chapters: [CH.WHY, CH.HARD, CH.PATH]
+    });
+    return out;
+  }
+
   function read(a) {
     seedFrom(a);
     var all = []
@@ -589,7 +937,9 @@
       .concat(readYongsin(a))
       .concat(readUnseong(a))
       .concat(readRelations(a))
-      .concat(readSinsal(a));
+      .concat(readSinsal(a))
+      .concat(readJohu(a))
+      .concat(readFlow(a));
 
     /* 챕터별로 나눠 담는다 */
     var byChapter = {};

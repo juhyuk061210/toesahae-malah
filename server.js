@@ -68,10 +68,16 @@ function deepRead(birth, now) {
     일간: GAN_KO[c.pillars.day.gan],   일지: JI_KO[c.pillars.day.ji],
     시간: GAN_KO[hourPillar.gan],      시지: JI_KO[hourPillar.ji]
   };
-  const dw = Saju.computeDaewoon
-    ? Saju.daewoonAt(Saju.computeDaewoon(c, birth.gender), now || new Date())
+  /* daewoonAt(dw, age) 는 나이를 받는다. 예전에는 Date 를 넘겨서
+     어떤 구간에도 안 걸렸고, 그래서 나이와 상관없이 항상 첫 대운(어린 시절)이
+     선택됐다. 나이는 진단 화면과 같은 방식(한국식)으로 센다. */
+  const _now = now || new Date();
+  const _age = _now.getFullYear() - solar.year + 1;
+  const dwAll = Saju.computeDaewoon ? Saju.computeDaewoon(c, birth.gender, 9) : null;
+  const dw = (dwAll && dwAll.list && dwAll.list.length)
+    ? Saju.daewoonAt(dwAll, _age)
     : null;
-  const yr = Saju.computeYearly ? Saju.computeYearly(c, (now || new Date()).getFullYear(), 1) : null;
+  const yr = Saju.computeYearly ? Saju.computeYearly(c, _now.getFullYear(), 1) : null;
 
   const analyze = SajuAnalyze.analyze({
     pillars: p, birth: input,

@@ -97,7 +97,12 @@
         careerPressure: pressure,
         preparation: preparationScore(flat)
       },
-      _breakdown: pressureBreakdown(flat, pressure)
+      _breakdown: pressureBreakdown(flat, pressure),
+
+      /* 무료3이 "본인이 고른 이유와 계산이 같은 곳을 가리키는지"를 말하려면
+         원본 선택값이 필요하다. 라벨이 아니라 코드값으로 넘긴다. */
+      _drainTop: flat.drainTop || null,
+      _drainBottom: flat.drainBottom || null
     };
   }
 

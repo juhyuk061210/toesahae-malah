@@ -302,6 +302,57 @@
     return TYPES.D;
   }
 
+  /* 유형 문단을 고정 문자열로 두면 같은 유형인 사람은 100% 같은 글을 읽는다.
+     실제로 8명 중 6명이 글자까지 똑같은 문단을 받았다. 결과 화면 맨 위,
+     첫인상 자리라 여기가 같으면 나머지도 같아 보인다.
+
+     그래서 유형이 정한 뼈대 문장 뒤에, 본인이 답한 것에서 나온 문장을 하나 붙인다.
+     근속은 반드시 구간 표현으로만 쓴다 — 7~10년 구간에 "8년째" 라고 쓰면
+     7년차·10년차에게는 사실이 아닌 말이 된다. */
+  function typeDetail(type, a, sc, bd) {
+    var base = type.detail;
+    var tails = [];
+
+    var TEN_SAY = {
+      u1: "아직 1년이 안 되셨습니다. 이 시점의 답답함은 조직보다 적응 곡선에서 오는 몫이 큽니다.",
+      "1_3": "1~3년 구간입니다. 여기서 한 번 크게 흔들리는 건 흔한 일입니다.",
+      "3_5": "3~5년 구간입니다. 할 줄 아는 게 늘수록 남는 게 뭔지 더 따지게 되는 때입니다.",
+      "5_7": "5년을 넘기셨습니다. 이 정도 다니면 못 버텨서가 아니라 계산이 서서 움직입니다.",
+      "7_10": "7년을 넘기셨습니다. 쌓인 게 많은 만큼 옮길 때 잃는 것도 같이 계산해야 합니다.",
+      o10: "10년을 넘기셨습니다. 이 자리에서의 고민은 이직이라기보다 방향 문제에 가깝습니다."
+    };
+    if (a && a.tenure && TEN_SAY[a.tenure]) tails.push(TEN_SAY[a.tenure]);
+
+    /* 실제로 한 행동과 마음의 속도 차이 */
+    var P = sc.careerPressure, R2 = sc.preparation;
+    if (R2 >= 80) {
+      tails.push("준비는 이미 여러 칸 가 있습니다. 남은 건 결정의 문제입니다.");
+    } else if (R2 <= 20 && P >= 70) {
+      tails.push("마음은 멀리 가 있는데 손은 아직 출발선입니다. 이 간격 자체가 피로를 만듭니다.");
+    } else if (R2 <= 35) {
+      tails.push("아직 밖으로 꺼낸 건 많지 않습니다. 그래서 선택지가 좁게 느껴집니다.");
+    }
+
+    /* 압박의 최대 축 */
+    if (bd) {
+      var top = null, tv = -1, k;
+      for (k in bd) if (bd[k] > tv) { tv = bd[k]; top = k; }
+      var AX = {
+        "사람관계": "지금 무게는 사람 쪽에 몰려 있습니다.",
+        "성장": "지금 무게는 성장이 멈춘 감각 쪽에 몰려 있습니다.",
+        "보상": "지금 무게는 보상이 안 맞는 쪽에 몰려 있습니다.",
+        "업무량": "지금 무게는 일의 양 쪽에 몰려 있습니다."
+      };
+      if (top && AX[top]) tails.push(AX[top]);
+    }
+
+    if (!tails.length) return base;
+    /* 명식·답변에서 나온 지문으로 하나만 고른다. 같은 사람은 늘 같은 문장. */
+    var h = 5381, src = (a && a.tenure ? a.tenure : "") + P + "|" + R2 + "|" + type.key, i;
+    for (i = 0; i < src.length; i++) h = ((h * 33) ^ src.charCodeAt(i)) & 0x7fffffff;
+    return base + " " + tails[h % tails.length];
+  }
+
   /* =========================================================
      퇴사 매트릭스 (§25) — 준비도 × 변화흐름
      ========================================================= */
@@ -516,8 +567,22 @@
       hourKnown: !!b.hourKnown, hour: b.hour, minute: b.minute || 0
     });
 
+    var now = payload.now || new Date();
+    var nowYear = now.getFullYear();
+    var nowMonth = now.getMonth() + 1;
+    var age = nowYear - b.year + 1; // 한국식 나이 근사
+
+    var daewoon = S.computeDaewoon(chart, b.gender || "M", 9);
+    var yearly = S.computeYearly(chart, nowYear, 3);
+    var monthly = S.computeMonthlyFlow(chart, nowYear, nowMonth, 12);
+
     /* 심화 엔진이 로드돼 있으면 함께 돌린다.
-       없으면 기존 방식 그대로 — 서비스는 어느 쪽이든 동작한다. */
+       없으면 기존 방식 그대로 — 서비스는 어느 쪽이든 동작한다.
+
+       반드시 대운·세운을 계산한 *뒤에* 불러야 한다.
+       예전에는 이 블록이 위에 있어서 daeunJi 를 못 넘겼고,
+       그 결과 나이와 상관없이 모든 손님이 "대운 진입 전" 으로 떨어지면서
+       본문에 "대운 - 국면입니다" 처럼 자리표시자가 그대로 노출됐다. */
     var deep = null;
     try {
       if (global.SajuAnalyze && global.SajuRead && global.SajuDeep) {
@@ -529,26 +594,22 @@
           일간: GK[chart.pillars.day.gan],   일지: JK[chart.pillars.day.ji],
           시간: GK[hp.gan],                  시지: JK[hp.ji]
         };
+        var dwNow = (S.daewoonAt && daewoon && daewoon.list && daewoon.list.length)
+          ? S.daewoonAt(daewoon, age) : null;
+        var syNow = (yearly && yearly.length) ? yearly[0] : null;
         var da = global.SajuAnalyze.analyze({
           pillars: dp,
           birth: { year: solar.year, month: solar.month, day: solar.day,
                    hour: b.hourKnown ? b.hour : 12, minute: b.minute || 0,
                    hourKnown: !!b.hourKnown },
           hourKnown: !!b.hourKnown,
-          termIdx: chart.termIdx, termYear: chart.termYear
+          termIdx: chart.termIdx, termYear: chart.termYear,
+          daeunJi: dwNow && dwNow.ji != null ? JK[dwNow.ji] : null,
+          seunJi: syNow && syNow.ji != null ? JK[syNow.ji] : null
         });
         deep = { analyze: da, read: global.SajuRead.read(da) };
       }
     } catch (e) { deep = null; }
-
-    var now = payload.now || new Date();
-    var nowYear = now.getFullYear();
-    var nowMonth = now.getMonth() + 1;
-    var age = nowYear - b.year + 1; // 한국식 나이 근사
-
-    var daewoon = S.computeDaewoon(chart, b.gender || "M", 9);
-    var yearly = S.computeYearly(chart, nowYear, 3);
-    var monthly = S.computeMonthlyFlow(chart, nowYear, nowMonth, 12);
 
     /* 새 질문지를 거쳐 온 경우 bridge 가 더 정확한 점수를 미리 계산해 둔다.
        실제로 한 행동 12개를 물어보므로 자기보고보다 신뢰도가 높다. */
@@ -661,33 +722,83 @@
         id: "cause",
         kind: "split",
         title: "회사가 싫은 걸까, 일이 싫은 걸까?",
-        verdict: split.회사환경 >= split.직무적합
-          ? "회사 환경의 영향이 더 큽니다."
-          : "직무 적합도의 영향이 더 큽니다.",
+        /* 판정도 본문과 똑같은 계산을 봐야 한다.
+           예전에는 판정이 회사환경/직무적합 둘만 비교하는 바람에
+           "회사 환경의 영향이 더 큽니다" 밑에
+           "세 항목의 차이가 크지 않습니다" 가 붙는 경우가 있었다.
+           손님이 보는 화면에서 앞뒤가 안 맞으면 나머지 문장도 다 의심받는다. */
+        verdict: (function () {
+          var top = "회사환경", topV = split.회사환경;
+          if (split.직무적합 > topV) { top = "직무적합"; topV = split.직무적합; }
+          if (split.관계스트레스 > topV) { top = "관계스트레스"; topV = split.관계스트레스; }
+          var lo = Math.min(split.회사환경, split.직무적합, split.관계스트레스);
+          if (topV - lo < 10) return "한 가지 원인으로 좁혀지지 않습니다.";
+          if (top === "관계스트레스") return "사람 관계의 영향이 가장 큽니다.";
+          if (top === "직무적합") return "직무 적합도의 영향이 더 큽니다.";
+          return "회사 환경의 영향이 더 큽니다.";
+        })(),
         bars: [
           { label: "회사 환경",   value: split.회사환경 },
           { label: "직무 적합",   value: split.직무적합 },
           { label: "관계 스트레스", value: split.관계스트레스 }
         ],
-        /* 판정과 본문이 같은 기준을 봐야 한다.
-           예전에는 판정은 '직무', 본문은 '환경'이라고 말하는 경우가 있었다. */
+        /* 결제 직전 마지막 화면이다. 여기가 옆사람과 같으면 유료로 안 넘어간다.
+           예전에는 분기가 4개뿐이라 8명이 3종류만 받았다.
+
+           판정과 본문은 반드시 같은 계산을 봐야 한다.
+           그리고 갈리는 근거를 전부 본인이 클릭한 값에서만 가져온다 —
+           점수 / 격차 / 본인이 고른 이유와 일치하는지.
+           지어낸 관찰이 아니라 본인이 낸 답이라 아무한테나 맞는 말이 될 수 없다. */
         body: (function () {
-          var top = "회사환경", topV = split.회사환경;
-          if (split.직무적합 > topV) { top = "직무적합"; topV = split.직무적합; }
-          if (split.관계스트레스 > topV) { top = "관계스트레스"; topV = split.관계스트레스; }
-          var vals = [split.회사환경, split.직무적합, split.관계스트레스];
-          var gap = topV - Math.min.apply(null, vals);
-          if (gap < 10) {
-            return "세 항목의 차이가 크지 않습니다. 특정 하나가 원인이라기보다 " +
-                   "전반적으로 소모되고 있는 상태에 가깝습니다.";
-          }
-          if (top === "관계스트레스") {
-            return "현재 고민의 중심에는 업무 자체보다 사람 관계가 더 크게 자리 잡고 있습니다.";
-          }
-          if (top === "직무적합") {
-            return "지금 힘든 이유는 환경보다 일 자체와의 결이 맞지 않는 데 가깝습니다.";
-          }
-          return "지금의 어려움은 특정 업무보다 조직 환경 전반에서 오는 쪽에 가깝습니다.";
+          var LB = { 회사환경: "회사 환경", 직무적합: "직무 적합", 관계스트레스: "사람 관계" };
+          var rows = [
+            { k: "회사환경", v: split.회사환경 },
+            { k: "직무적합", v: split.직무적합 },
+            { k: "관계스트레스", v: split.관계스트레스 }
+          ].sort(function (x, y) { return y.v - x.v; });
+          var top = rows[0].k, gap = rows[0].v - rows[2].v;
+
+          var head = LB[top] + " " + rows[0].v + "점, 나머지는 " +
+                     LB[rows[1].k] + " " + rows[1].v + "점 · " +
+                     LB[rows[2].k] + " " + rows[2].v + "점입니다. ";
+
+          var howFar = gap >= 25 ? "한쪽으로 확실히 기웁니다. "
+                     : gap >= 10 ? "차이가 눈에 보입니다. "
+                     : "세 개가 거의 붙어 있습니다. ";
+
+          var SAY = {
+            회사환경: ["일 자체보다 그 일이 놓인 자리에서 깎이고 있습니다.",
+                       "같은 일을 다른 곳에서 하면 체감이 달라질 수 있는 배치입니다.",
+                       "직무를 바꾸는 것보다 판을 바꾸는 쪽이 먼저 검토됩니다."],
+            직무적합: ["회사를 옮겨도 같은 일을 맡으면 같은 지점이 옵니다.",
+                       "환경보다 일 자체와의 결이 어긋나 있습니다.",
+                       "자리를 옮기는 것보다 하는 일을 바꾸는 쪽이 먼저입니다."],
+            관계스트레스: ["업무보다 사람 쪽에서 더 많이 소모되고 있습니다.",
+                           "일의 난이도가 아니라 관계의 소모가 무게를 만들고 있습니다.",
+                           "같은 업무라도 사람 구성이 달라지면 체감이 크게 바뀌는 배치입니다."]
+          };
+          var flat0 = split.관계스트레스;
+          var hh = (split.회사환경 * 31 + split.직무적합 * 17 + flat0 * 7) % 3;
+          var mid = gap < 10
+            ? "원인을 하나로 좁히기 어렵습니다. 한 군데만 손봐서는 잘 안 바뀝니다."
+            : SAY[top][hh];
+
+          /* 여기서 "직접 고르신 이유와 계산이 일치합니다" 라고 쓰면 안 된다.
+             이 점수 자체가 그 선택에서 계산된 값이라, 일치는 당연한 결과다.
+             당연한 걸 증거처럼 내미는 건 가짜 근거다.
+
+             반대로 *어긋나는* 경우는 진짜 정보다. 다른 답변들(실제로 한 행동,
+             스스로 붙인 말 등)에서 만들어진 축이 그 선택을 이겼다는 뜻이기 때문이다.
+             그래서 어긋날 때만 말한다. */
+          var MAPD = { person: "관계스트레스", culture: "회사환경", load: "회사환경",
+                       meaning: "직무적합", fair: "회사환경", money: "회사환경",
+                       growth: "직무적합", future: "직무적합" };
+          var picked = a && a._drainTop ? MAPD[a._drainTop] : null;
+          var tail = (picked && gap >= 10 && picked !== top)
+            ? " 가장 지치게 하는 것으로 고르신 항목은 다른 쪽이었습니다. " +
+              "고르신 것보다 실제로 답하신 행동 쪽이 더 무겁게 나왔다는 뜻이라, 이 어긋남이 단서가 됩니다."
+            : "";
+          return head + howFar + mid + tail;
         })()
       }
     ];
@@ -724,7 +835,8 @@
     return {
       name: name,
       headline: type.message,
-      type: { key: type.key, name: type.name, tag: type.tag, detail: type.detail },
+      type: { key: type.key, name: type.name, tag: type.tag,
+              detail: typeDetail(type, a, scores, bd) },
       matrix: matrix,
       scores: scores,
       pressureBreakdown: bd,
